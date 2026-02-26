@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - Campus Lost & Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-form select {
+            padding: 8px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #ffffff;
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 760px;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f1f5f9;
+        }
+
+        .logout-link {
+            display: inline-block;
+            text-decoration: none;
+            color: #ffffff;
+            background: #dc2626;
+            padding: 10px 14px;
+            border-radius: 8px;
+        }
+
+        .delete-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .thumb {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            cursor: zoom-in;
+        }
+
+        #imageModal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+
+        #modalImage {
+            max-width: 90vw;
+            max-height: 90vh;
+            border: 2px solid white;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 14px;
+            }
+
+            .top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top">
+        <h2>Admin Dashboard</h2>
+        <div class="top-right">
+            <form class="filter-form" method="GET" action="/admin/dashboard">
+                <select name="filter" onchange="this.form.submit()">
+                    <option value="" {% if current_filter == 'All' %}selected{% endif %}>All</option>
+                    <option value="Lost" {% if current_filter == 'Lost' %}selected{% endif %}>Lost</option>
+                    <option value="Found" {% if current_filter == 'Found' %}selected{% endif %}>Found</option>
+                </select>
+            </form>
+            <a class="logout-link" href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Student</th>
+                <th>Description</th>
+                <th>Location</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Photo</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if items %}
+                {% for item in items %}
+                    <tr>
+                        <td>{{ item[1] }}</td>
+                        <td>{{ item[7] }}</td>
+                        <td>{{ item[2] }}</td>
+                        <td>{{ item[3] }}</td>
+                        <td>{{ item[4] }}</td>
+                        <td>{{ item[5] }}</td>
+                        <td>
+                            {% if item[6] %}
+                                <img class="thumb" src="{{ url_for('static', filename='uploads/' + item[6]) }}" alt="Item photo" onclick="openImageModal(this.src)">
+                            {% else %}
+                                No image
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="POST" action="/admin/delete/{{ item[0] }}" onsubmit="return confirm('Delete this item?');">
+                                <button class="delete-btn" type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="8">No items found.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    </div>
+
+    <div id="imageModal" onclick="closeImageModal()">
+        <img id="modalImage" src="" alt="Zoomed item photo">
+    </div>
+
+    <script>
+        function openImageModal(imageSrc) {
+            document.getElementById('modalImage').src = imageSrc;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+    </script>
+</body>
+</html>

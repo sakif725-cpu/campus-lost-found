@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - Campus Lost & Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f3f4f6;
+        }
+
+        .box {
+            width: min(360px, calc(100% - 32px));
+            margin: 90px auto;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 22px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .link-btn {
+            display: block;
+            text-decoration: none;
+            margin: 10px 0;
+            padding: 11px;
+            border-radius: 8px;
+            color: white;
+            background: #2563eb;
+        }
+
+        .admin-btn {
+            background: #0f766e;
+        }
+
+        @media (max-width: 640px) {
+            .box {
+                margin: 40px auto;
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>Login As</h2>
+        <a class="link-btn" href="/user/login">Login as User</a>
+        <a class="link-btn admin-btn" href="/admin/login">Login as Admin</a>
+    </div>
+</body>
+</html>

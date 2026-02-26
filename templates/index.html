@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Campus Lost & Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .post-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .post-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .name-wrap {
+            min-width: 0;
+        }
+
+        .student-name {
+            font-weight: bold;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .profile-link:hover .student-name {
+            text-decoration: underline;
+        }
+
+        .post-date {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .type-badge {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 6px 10px;
+            border-radius: 999px;
+            color: #fff;
+            background: #2563eb;
+            flex-shrink: 0;
+        }
+
+        .type-badge.found {
+            background: #0f766e;
+        }
+
+        .post-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 0 8px;
+        }
+
+        .post-text {
+            margin: 0 0 10px;
+            line-height: 1.5;
+            color: #374151;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .meta-chip {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+
+        .meta-label {
+            color: #6b7280;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .status-claimed {
+            color: #0f766e;
+            font-weight: bold;
+        }
+
+        .status-open {
+            color: #b45309;
+            font-weight: bold;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .title-banner {
+            min-height: 78px;
+            width: min(460px, 100%);
+            border-radius: 12px;
+            background-image: linear-gradient(rgba(17, 24, 39, 0.45), rgba(17, 24, 39, 0.45)), url("{{ url_for('static', filename='images/yoSHAKIF2.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            box-sizing: border-box;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .title-banner h1 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 30px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+        }
+
+        .logout-btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: #dc2626;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .settings-fab-wrap {
+            position: relative;
+            position: fixed;
+            right: 24px;
+            bottom: 92px;
+            z-index: 1250;
+        }
+
+        .settings-btn {
+            border: none;
+            border-radius: 50%;
+            background: #374151;
+            color: #ffffff;
+            width: 56px;
+            height: 56px;
+            cursor: pointer;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+        }
+
+        .settings-menu {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            right: 0;
+            width: 190px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+            padding: 6px;
+            z-index: 1300;
+            opacity: 0;
+            transform: translateY(-6px) scale(0.98);
+            pointer-events: none;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+
+        .settings-menu.open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .settings-link {
+            display: block;
+            text-decoration: none;
+            color: #111827;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .settings-link:hover {
+            background: #f3f4f6;
+        }
+
+        .settings-link.logout {
+            color: #b91c1c;
+            font-weight: bold;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .search-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+        }
+
+        button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+
+        .claim-btn {
+            margin-top: 8px;
+            background: #0f766e;
+        }
+
+        .comments-section {
+            margin-top: 12px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+        }
+
+        .comments-title {
+            margin: 0 0 8px;
+            font-size: 14px;
+            color: #374151;
+            font-weight: bold;
+        }
+
+        .comment-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .comment-item {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+        }
+
+        .comment-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .comment-user {
+            font-weight: bold;
+            color: #374151;
+        }
+
+        .comment-text {
+            margin: 0;
+            color: #1f2937;
+            line-height: 1.4;
+            font-size: 14px;
+        }
+
+        .comment-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .comment-form input {
+            flex: 1;
+            padding: 9px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+        }
+
+        .item-image {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 8px 0 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .fab {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+            background: #2563eb;
+            z-index: 1200;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 1100;
+        }
+
+        .action-modal {
+            display: none;
+            position: fixed;
+            z-index: 1201;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: min(94vw, 560px);
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            padding: 18px;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .action-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px;
+            background: #f9fafb;
+        }
+
+        .action-card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .filter-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-link {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .active-filter {
+            background: #0f766e;
+        }
+
+        .post-modal {
+            display: none;
+            position: fixed;
+            z-index: 1202;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: min(94vw, 520px);
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            padding: 18px;
+        }
+
+        .post-modal h2 {
+            margin-top: 0;
+        }
+
+        .post-modal input,
+        .post-modal select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        .cancel-btn {
+            background: #6b7280;
+        }
+
+        #imageModal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+
+        #modalImage {
+            max-width: 90vw;
+            max-height: 90vh;
+            border: 2px solid white;
+        }
+
+        .clickable-image {
+            cursor: zoom-in;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 14px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .topbar h1 {
+                margin: 0;
+                font-size: 24px;
+            }
+
+            .top-actions {
+                width: auto;
+            }
+
+            .title-banner {
+                width: 100%;
+                min-height: 72px;
+            }
+
+            .title-banner h1 {
+                font-size: 24px;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            .search-form button {
+                width: 100%;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .item-image {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .modal-actions button {
+                width: 100%;
+            }
+
+            .fab {
+                width: 50px;
+                height: 50px;
+                right: 16px;
+                bottom: 16px;
+            }
+
+            .settings-fab-wrap {
+                right: 16px;
+                bottom: 74px;
+            }
+
+            .settings-btn {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <a class="title-banner" href="/">
+                <h1>Campus Lost & Found</h1>
+            </a>
+            <div>
+                {% if session.get('role') == 'admin' %}
+                    <a class="logout-btn" style="background:#0f766e;" href="/admin/dashboard">Admin Dashboard</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <form method="GET" action="/" class="search-form">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search by title or description">
+            {% if current_filter != 'All' %}
+                <input type="hidden" name="filter" value="{{ current_filter }}">
+            {% endif %}
+            <button type="submit">Search</button>
+        </form>
+
+        <h2>All Items {% if current_filter != 'All' %}({{ current_filter }}){% endif %}</h2>
+
+        {% if items %}
+            {% for item in items %}
+                <div class="card">
+                    <div class="post-head">
+                        <div class="post-user">
+                            {% if item[8] %}
+                                <a class="profile-link" href="/users/{{ item[8] }}">
+                                    <div class="avatar">{{ (item[9] or 'U')[0]|upper }}</div>
+                                </a>
+                                <a class="profile-link name-wrap" href="/users/{{ item[8] }}">
+                                    <div class="student-name">{{ item[9] }}</div>
+                                    <div class="post-date">{{ item[4] }}</div>
+                                </a>
+                            {% else %}
+                                <div class="avatar">{{ (item[9] or 'U')[0]|upper }}</div>
+                                <div class="name-wrap">
+                                    <div class="student-name">{{ item[9] }}</div>
+                                    <div class="post-date">{{ item[4] }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <span class="type-badge {% if item[5] == 'Found' %}found{% endif %}">{{ item[5] }}</span>
+                    </div>
+
+                    <h3 class="post-title">{{ item[1] }}</h3>
+
+                    {% if item[7] %}
+                        <img src="{{ url_for('static', filename='uploads/' + item[7]) }}" class="item-image clickable-image" onclick="openImageModal(this.src)"><br>
+                    {% endif %}
+
+                    <p class="post-text">{{ item[2] }}</p>
+
+                    <div class="meta-grid">
+                        <div class="meta-chip">
+                            <span class="meta-label">Location</span>
+                            {{ item[3] }}
+                        </div>
+                        <div class="meta-chip">
+                            <span class="meta-label">Status</span>
+                            <span class="{% if item[6] == 'Claimed' %}status-claimed{% else %}status-open{% endif %}">{{ item[6] }}</span>
+                        </div>
+                    </div>
+
+                    {% if item[6] != 'Claimed' and (session.get('role') == 'admin' or session.get('user_id') == item[8]) %}
+                        <form method="POST" action="/claim/{{ item[0] }}">
+                            <button type="submit" class="claim-btn">Mark as Claimed</button>
+                        </form>
+                    {% endif %}
+
+                    <div class="comments-section">
+                        {% set post_comments = comments_by_item_id.get(item[0], []) %}
+                        <p class="comments-title">Comments ({{ post_comments|length }})</p>
+
+                        {% if post_comments %}
+                            <ul class="comment-list">
+                                {% for comment in post_comments %}
+                                    <li class="comment-item">
+                                        <div class="comment-head">
+                                            <span class="comment-user">{{ comment[4] }}</span>
+                                            <span>{{ comment[2] }}</span>
+                                        </div>
+                                        <p class="comment-text">{{ comment[1] }}</p>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        <form method="POST" action="/comment/{{ item[0] }}" class="comment-form">
+                            <input type="text" name="comment_text" placeholder="Write a comment..." required>
+                            <button type="submit">Comment</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="card">No items posted yet.</div>
+        {% endif %}
+    </div>
+
+    <div class="settings-fab-wrap" id="settingsWrap">
+        <button type="button" class="settings-btn" onclick="toggleSettingsMenu()" title="Settings">⚙️</button>
+        <div class="settings-menu" id="settingsMenu">
+            <a class="settings-link" href="/profile">My Profile</a>
+            <a class="settings-link" href="/contact">Contact Us</a>
+            <a class="settings-link logout" href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <button class="fab" type="button" onclick="openActionModal()" title="Post or Filter">✏️</button>
+
+    <div id="mainOverlay" class="overlay" onclick="closeAllModals()"></div>
+
+    <div id="actionModal" class="action-modal">
+        <h2>Quick Actions</h2>
+        <div class="action-grid">
+            <div class="action-card">
+                <h3>Post an Item</h3>
+                <button type="button" onclick="openPostFromAction()">Open Post Form</button>
+            </div>
+            <div class="action-card">
+                <h3>Filter</h3>
+                <div class="filter-links">
+                    <a class="filter-link {% if current_filter == 'All' %}active-filter{% endif %}" href="{{ url_for('home', search=search_query) }}">All</a>
+                    <a class="filter-link {% if current_filter == 'Lost' %}active-filter{% endif %}" href="{{ url_for('home', filter='Lost', search=search_query) }}">Lost</a>
+                    <a class="filter-link {% if current_filter == 'Found' %}active-filter{% endif %}" href="{{ url_for('home', filter='Found', search=search_query) }}">Found</a>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="cancel-btn" onclick="closeActionModal()">Close</button>
+        </div>
+    </div>
+
+    <div id="postModal" class="post-modal">
+        <h2>Post an Item</h2>
+        <form method="POST" action="/add" enctype="multipart/form-data">
+            <label>Title:</label>
+            <input type="text" name="title" required>
+
+            <label>Description:</label>
+            <input type="text" name="description" required>
+
+            <label>Upload Image:</label>
+            <input type="file" name="image">
+
+            <label>Location:</label>
+            <input type="text" name="location" required>
+
+            <label>Date:</label>
+            <input type="date" name="date" required>
+
+            <label>Type:</label>
+            <select name="type">
+                <option value="Lost">Lost</option>
+                <option value="Found">Found</option>
+            </select>
+
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closePostModal()">Cancel</button>
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+
+<div id="imageModal" onclick="closeImageModal()">
+    <img id="modalImage" src="" alt="Zoomed item image">
+</div>
+
+<script>
+    function toggleSettingsMenu() {
+        const menu = document.getElementById('settingsMenu');
+        menu.classList.toggle('open');
+    }
+
+    function closeSettingsMenu() {
+        const menu = document.getElementById('settingsMenu');
+        if (menu) {
+            menu.classList.remove('open');
+        }
+    }
+
+    function openActionModal() {
+        closeSettingsMenu();
+        document.getElementById('mainOverlay').style.display = 'block';
+        document.getElementById('actionModal').style.display = 'block';
+    }
+
+    function closeActionModal() {
+        document.getElementById('actionModal').style.display = 'none';
+        if (document.getElementById('postModal').style.display !== 'block') {
+            document.getElementById('mainOverlay').style.display = 'none';
+        }
+    }
+
+    function openPostFromAction() {
+        closeActionModal();
+        openPostModal();
+    }
+
+    function openPostModal() {
+        closeSettingsMenu();
+        document.getElementById('mainOverlay').style.display = 'block';
+        document.getElementById('postModal').style.display = 'block';
+    }
+
+    function closePostModal() {
+        document.getElementById('mainOverlay').style.display = 'none';
+        document.getElementById('postModal').style.display = 'none';
+    }
+
+    function closeAllModals() {
+        document.getElementById('mainOverlay').style.display = 'none';
+        document.getElementById('actionModal').style.display = 'none';
+        document.getElementById('postModal').style.display = 'none';
+    }
+
+    function openImageModal(imageSrc) {
+        document.getElementById('modalImage').src = imageSrc;
+        document.getElementById('imageModal').style.display = 'flex';
+    }
+
+    function closeImageModal() {
+        document.getElementById('imageModal').style.display = 'none';
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            if (document.getElementById('imageModal').style.display === 'flex') {
+                closeImageModal();
+                return;
+            }
+            closeSettingsMenu();
+            closeAllModals();
+        }
+    });
+
+    document.addEventListener('click', function (event) {
+        const settingsWrap = document.getElementById('settingsWrap');
+        if (settingsWrap && !settingsWrap.contains(event.target)) {
+            closeSettingsMenu();
+        }
+    });
+</script>
+</body>
+</html>

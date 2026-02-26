@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Profile - Campus Lost & Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .container {
+            width: min(720px, calc(100% - 32px));
+            margin: 40px auto;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 22px;
+            box-sizing: border-box;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 9px 12px;
+            border-radius: 8px;
+            background: #2563eb;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: #dbeafe;
+            color: #1d4ed8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .name {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .username {
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .meta-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+            padding: 10px;
+        }
+
+        .label {
+            display: block;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                margin: 20px auto;
+                padding: 16px;
+            }
+
+            .top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top">
+            <h2>Student Profile</h2>
+            <a class="btn" href="/">Back to Home</a>
+        </div>
+
+        <div class="profile-header">
+            <div class="avatar">{{ ((user[2] or user[1] or 'U')[0])|upper }}</div>
+            <div>
+                <h3 class="name">{{ user[2] or user[1] }}</h3>
+                <div class="username">@{{ user[1] }}</div>
+            </div>
+        </div>
+
+        <div class="meta-grid">
+            <div class="meta-card">
+                <span class="label">Student ID</span>
+                {{ user[3] or 'Not provided' }}
+            </div>
+            <div class="meta-card">
+                <span class="label">Department</span>
+                {{ user[4] or 'Not provided' }}
+            </div>
+            <div class="meta-card">
+                <span class="label">Email</span>
+                {{ user[5] or 'Not provided' }}
+            </div>
+            <div class="meta-card">
+                <span class="label">Phone</span>
+                {{ user[6] or 'Not provided' }}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
