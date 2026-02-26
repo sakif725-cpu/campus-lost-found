@@ -124,6 +124,8 @@ def init_db():
     conn.commit()
     conn.close()
 
+init_db()
+
 @app.route('/')
 def home():
     if not is_user_logged_in():
@@ -697,5 +699,5 @@ def contact():
     return render_template('contact.html')
 
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
