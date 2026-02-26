@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat - Campus Lost & Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .container {
+            width: min(860px, calc(100% - 24px));
+            margin: 14px auto;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: calc(100vh - 28px);
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 14px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
+
+        .top h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .top .sub {
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            color: #ffffff;
+            background: #2563eb;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        .item-ref {
+            margin: 10px 12px 0;
+            background: #ecfeff;
+            border: 1px solid #a5f3fc;
+            color: #0f766e;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+
+        .messages {
+            padding: 12px;
+            overflow-y: auto;
+            background: #f3f4f6;
+        }
+
+        .message {
+            max-width: 76%;
+            margin-bottom: 9px;
+            padding: 9px 10px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .mine {
+            margin-left: auto;
+            background: #2563eb;
+            color: #ffffff;
+            border-bottom-right-radius: 3px;
+        }
+
+        .theirs {
+            margin-right: auto;
+            background: #ffffff;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 3px;
+        }
+
+        .meta {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .compose {
+            border-top: 1px solid #e5e7eb;
+            background: #ffffff;
+            padding: 10px;
+        }
+
+        .compose form {
+            display: flex;
+            gap: 8px;
+        }
+
+        .compose input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+        }
+
+        .compose button {
+            border: none;
+            background: #0f766e;
+            color: #ffffff;
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+        }
+
+        .empty {
+            text-align: center;
+            color: #6b7280;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                width: 100%;
+                margin: 0;
+                height: 100vh;
+                border-radius: 0;
+                border: none;
+            }
+
+            .message {
+                max-width: 88%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>
+            <div class="top">
+                <div>
+                    <h3>{{ partner[2] or partner[1] }}</h3>
+                    <div class="sub">@{{ partner[1] }}</div>
+                </div>
+                <a class="btn" href="/inbox">Inbox</a>
+            </div>
+
+            {% if chat_item %}
+                <div class="item-ref">Messaging about item: #{{ chat_item[0] }} - {{ chat_item[1] }}</div>
+            {% endif %}
+        </div>
+
+        <div id="messages" class="messages">
+            {% if messages %}
+                {% for msg in messages %}
+                    <div class="message {% if msg[1] == current_user_id %}mine{% else %}theirs{% endif %}">
+                        {% if msg[5] %}
+                            <div><strong>Item #{{ msg[5] }}</strong></div>
+                        {% endif %}
+                        <div>{{ msg[3] }}</div>
+                        <div class="meta">{{ msg[4] }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty">No messages yet. Start the conversation.</div>
+            {% endif %}
+        </div>
+
+        <div class="compose">
+            <form method="POST" action="/chat/{{ partner[0] }}/send">
+                {% if chat_item_id %}
+                    <input type="hidden" name="item_id" value="{{ chat_item_id }}">
+                {% endif %}
+                <input id="messageInput" type="text" name="message_text" placeholder="Type a message..." required>
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const messagesBox = document.getElementById('messages');
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+
+        setInterval(function () {
+            const messageInput = document.getElementById('messageInput');
+            const isTyping = document.activeElement === messageInput && messageInput.value.trim() !== '';
+            if (!isTyping) {
+                window.location.reload();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

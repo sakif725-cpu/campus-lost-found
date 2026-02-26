@@ -17,6 +17,28 @@ def is_user_logged_in():
 def is_admin_logged_in():
     return session.get('role') == 'admin'
 
+
+def get_unread_message_count(user_id):
+    if not user_id:
+        return 0
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) FROM messages WHERE receiver_id = ? AND is_read = 0",
+        (user_id,)
+    )
+    unread_count = cursor.fetchone()[0]
+    conn.close()
+    return unread_count
+
+
+@app.context_processor
+def inject_unread_message_count():
+    user_id = session.get('user_id')
+    unread_messages_count = get_unread_message_count(user_id) if user_id else 0
+    return {'unread_messages_count': unread_messages_count}
+
 def init_db():
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
@@ -65,6 +87,21 @@ def init_db():
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(item_id) REFERENCES items(id),
             FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender_id INTEGER NOT NULL,
+            receiver_id INTEGER NOT NULL,
+            item_id INTEGER,
+            message_text TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            is_read INTEGER DEFAULT 0,
+            FOREIGN KEY(sender_id) REFERENCES users(id),
+            FOREIGN KEY(receiver_id) REFERENCES users(id),
+            FOREIGN KEY(item_id) REFERENCES items(id)
         )
     ''')
 
@@ -189,6 +226,62 @@ def add_item():
     conn.close()
     
     return redirect('/')
+
+
+@app.route('/edit/<int:item_id>', methods=['GET', 'POST'])
+def edit_item(item_id):
+    if not is_user_logged_in():
+        return redirect('/login')
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, title, description, location, date, type, image, owner_user_id FROM items WHERE id = ?",
+        (item_id,)
+    )
+    item = cursor.fetchone()
+
+    if not item:
+        conn.close()
+        return redirect('/')
+
+    current_user_id = session.get('user_id')
+    if session.get('role') != 'admin' and item[7] != current_user_id:
+        conn.close()
+        return redirect('/')
+
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        location = request.form.get('location', '').strip()
+        date = request.form.get('date', '').strip()
+        item_type = request.form.get('type', '').strip()
+
+        if not title or not description or not location or not date or item_type not in ('Lost', 'Found'):
+            conn.close()
+            return render_template('edit_item.html', item=item, error='Please fill all fields correctly.')
+
+        image = request.files.get('image')
+        image_filename = item[6]
+
+        if image and image.filename != "":
+            image_filename = secure_filename(image.filename)
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
+
+        cursor.execute(
+            '''
+            UPDATE items
+            SET title = ?, description = ?, location = ?, date = ?, type = ?, image = ?
+            WHERE id = ?
+            ''',
+            (title, description, location, date, item_type, image_filename, item_id)
+        )
+        conn.commit()
+        conn.close()
+        return redirect('/')
+
+    conn.close()
+    return render_template('edit_item.html', item=item, error=None)
 
 @app.route('/claim/<int:item_id>', methods=['POST'])
 def claim_item(item_id):
@@ -368,6 +461,178 @@ def view_user_profile(user_id):
         return redirect('/')
 
     return render_template('user_profile.html', user=user)
+
+
+@app.route('/inbox')
+def inbox():
+    if not is_user_logged_in():
+        return redirect('/login')
+
+    current_user_id = session.get('user_id')
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    cursor.execute(
+        '''
+        SELECT
+            partner_id,
+            MAX(id) AS last_message_id,
+            SUM(CASE WHEN receiver_id = ? AND is_read = 0 THEN 1 ELSE 0 END) AS unread_count
+        FROM (
+            SELECT
+                id,
+                sender_id,
+                receiver_id,
+                is_read,
+                CASE
+                    WHEN sender_id = ? THEN receiver_id
+                    ELSE sender_id
+                END AS partner_id
+            FROM messages
+            WHERE sender_id = ? OR receiver_id = ?
+        )
+        GROUP BY partner_id
+        ORDER BY last_message_id DESC
+        ''',
+        (current_user_id, current_user_id, current_user_id, current_user_id)
+    )
+    conversation_rows = cursor.fetchall()
+
+    conversations = []
+    for row in conversation_rows:
+        partner_id, last_message_id, unread_count = row
+
+        cursor.execute(
+            "SELECT id, username, full_name FROM users WHERE id = ?",
+            (partner_id,)
+        )
+        partner = cursor.fetchone()
+        if not partner:
+            continue
+
+        cursor.execute(
+            "SELECT sender_id, message_text, created_at FROM messages WHERE id = ?",
+            (last_message_id,)
+        )
+        last_message = cursor.fetchone()
+        if not last_message:
+            continue
+
+        conversations.append({
+            'partner_id': partner[0],
+            'partner_username': partner[1],
+            'partner_name': partner[2] or partner[1],
+            'last_sender_id': last_message[0],
+            'last_message_text': last_message[1],
+            'last_message_time': last_message[2],
+            'unread_count': unread_count or 0
+        })
+
+    conn.close()
+    return render_template('inbox.html', conversations=conversations, current_user_id=current_user_id)
+
+
+@app.route('/chat/<int:user_id>')
+def chat(user_id):
+    if not is_user_logged_in():
+        return redirect('/login')
+
+    current_user_id = session.get('user_id')
+    if user_id == current_user_id:
+        return redirect('/inbox')
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, username, full_name FROM users WHERE id = ?",
+        (user_id,)
+    )
+    partner = cursor.fetchone()
+
+    if not partner:
+        conn.close()
+        return redirect('/inbox')
+
+    requested_item_id = request.args.get('item_id', '').strip()
+    chat_item = None
+    chat_item_id = None
+    if requested_item_id.isdigit():
+        chat_item_id = int(requested_item_id)
+        cursor.execute("SELECT id, title FROM items WHERE id = ?", (chat_item_id,))
+        chat_item = cursor.fetchone()
+        if not chat_item:
+            chat_item_id = None
+
+    cursor.execute(
+        '''
+        SELECT id, sender_id, receiver_id, message_text, created_at, item_id
+        FROM messages
+        WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+        ORDER BY id ASC
+        ''',
+        (current_user_id, user_id, user_id, current_user_id)
+    )
+    messages = cursor.fetchall()
+
+    cursor.execute(
+        "UPDATE messages SET is_read = 1 WHERE sender_id = ? AND receiver_id = ? AND is_read = 0",
+        (user_id, current_user_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return render_template(
+        'chat.html',
+        partner=partner,
+        messages=messages,
+        current_user_id=current_user_id,
+        chat_item=chat_item,
+        chat_item_id=chat_item_id
+    )
+
+
+@app.route('/chat/<int:user_id>/send', methods=['POST'])
+def send_message(user_id):
+    if not is_user_logged_in():
+        return redirect('/login')
+
+    current_user_id = session.get('user_id')
+    if user_id == current_user_id:
+        return redirect('/inbox')
+
+    message_text = request.form.get('message_text', '').strip()
+    item_id_text = request.form.get('item_id', '').strip()
+    item_id = None
+    if item_id_text.isdigit():
+        item_id = int(item_id_text)
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+    receiver = cursor.fetchone()
+    if not receiver:
+        conn.close()
+        return redirect('/inbox')
+
+    if item_id is not None:
+        cursor.execute("SELECT id FROM items WHERE id = ?", (item_id,))
+        item_exists = cursor.fetchone()
+        if not item_exists:
+            item_id = None
+
+    if message_text:
+        cursor.execute(
+            "INSERT INTO messages (sender_id, receiver_id, item_id, message_text) VALUES (?, ?, ?, ?)",
+            (current_user_id, user_id, item_id, message_text)
+        )
+        conn.commit()
+
+    conn.close()
+
+    if item_id is not None:
+        return redirect(f'/chat/{user_id}?item_id={item_id}')
+    return redirect(f'/chat/{user_id}')
 
 @app.route('/admin/dashboard')
 def admin_dashboard():

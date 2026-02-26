@@ -7,8 +7,32 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            background: #f3f4f6;
+            background: transparent;
             color: #1f2937;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        .live-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(circle at 10% 16%, rgba(59, 130, 246, 0.34), transparent 36%),
+                radial-gradient(circle at 88% 20%, rgba(20, 184, 166, 0.30), transparent 38%),
+                radial-gradient(circle at 48% 86%, rgba(168, 85, 247, 0.26), transparent 40%),
+                linear-gradient(125deg, #f8fafc, #e0e7ff, #cffafe, #f5d0fe);
+            background-size: 135% 135%, 135% 135%, 135% 135%, 240% 240%;
+            animation: liveBgMove 12s ease-in-out infinite alternate;
+        }
+
+        @keyframes liveBgMove {
+            0% {
+                background-position: 0% 0%, 100% 0%, 50% 100%, 0% 50%;
+            }
+            100% {
+                background-position: 14% 12%, 86% 10%, 48% 84%, 100% 50%;
+            }
         }
 
         .container {
@@ -18,11 +42,14 @@
         }
 
         .card {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
+            background:
+                linear-gradient(rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.90)) padding-box,
+                linear-gradient(135deg, #2563eb, #14b8a6, #7c3aed, #f59e0b) border-box;
+            border: 2px solid transparent;
             border-radius: 14px;
             padding: 16px;
             margin-bottom: 16px;
+            backdrop-filter: blur(4px);
         }
 
         .post-head {
@@ -31,6 +58,7 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 12px;
+            position: relative;
         }
 
         .post-user {
@@ -184,6 +212,41 @@
             z-index: 1250;
         }
 
+        .inbox-fab {
+            position: fixed;
+            right: 24px;
+            bottom: 156px;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #2563eb;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 24px;
+            z-index: 1251;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+        }
+
+        .inbox-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 999px;
+            background: #dc2626;
+            color: #ffffff;
+            font-size: 11px;
+            line-height: 18px;
+            text-align: center;
+            border: 2px solid #ffffff;
+            box-sizing: border-box;
+        }
+
         .settings-btn {
             border: none;
             border-radius: 50%;
@@ -249,22 +312,53 @@
         .search-form input {
             flex: 1;
             padding: 10px;
-            border: 1px solid #d1d5db;
+            border: 2px solid transparent;
             border-radius: 8px;
+            background:
+                linear-gradient(#ffffff, #ffffff) padding-box,
+                linear-gradient(135deg, rgb(255, 0, 128), rgb(0, 170, 255), rgb(0, 255, 136)) border-box;
         }
 
         button {
             padding: 10px 14px;
             border: none;
             border-radius: 8px;
-            background: #2563eb;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
             color: white;
             cursor: pointer;
         }
 
         .claim-btn {
             margin-top: 8px;
-            background: #0f766e;
+            background: linear-gradient(135deg, #0f766e, #14b8a6);
+        }
+
+        .message-btn {
+            margin-top: 8px;
+            margin-left: 8px;
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .post-menu-link {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            text-decoration: none;
+            color: #374151;
+            font-size: 24px;
+            line-height: 1;
+            padding: 2px 8px;
+            border-radius: 8px;
+        }
+
+        .post-menu-link:hover {
+            background: #f3f4f6;
         }
 
         .comments-section {
@@ -553,6 +647,14 @@
                 bottom: 74px;
             }
 
+            .inbox-fab {
+                right: 16px;
+                bottom: 132px;
+                width: 50px;
+                height: 50px;
+                font-size: 22px;
+            }
+
             .settings-btn {
                 width: 50px;
                 height: 50px;
@@ -561,6 +663,7 @@
     </style>
 </head>
 <body>
+    <div class="live-bg" aria-hidden="true"></div>
     <div class="container">
         <div class="topbar">
             <a class="title-banner" href="/">
@@ -605,6 +708,9 @@
                             {% endif %}
                         </div>
                         <span class="type-badge {% if item[5] == 'Found' %}found{% endif %}">{{ item[5] }}</span>
+                        {% if session.get('role') == 'admin' or session.get('user_id') == item[8] %}
+                            <a href="/edit/{{ item[0] }}" class="post-menu-link" title="Edit Post">...</a>
+                        {% endif %}
                     </div>
 
                     <h3 class="post-title">{{ item[1] }}</h3>
@@ -630,6 +736,10 @@
                         <form method="POST" action="/claim/{{ item[0] }}">
                             <button type="submit" class="claim-btn">Mark as Claimed</button>
                         </form>
+                    {% endif %}
+
+                    {% if item[8] and session.get('user_id') != item[8] %}
+                        <a href="/chat/{{ item[8] }}?item_id={{ item[0] }}" class="message-btn">Message Owner</a>
                     {% endif %}
 
                     <div class="comments-section">
@@ -661,6 +771,8 @@
             <div class="card">No items posted yet.</div>
         {% endif %}
     </div>
+
+    <a class="inbox-fab" href="/inbox" title="Inbox">💬{% if unread_messages_count > 0 %}<span class="inbox-badge">{{ unread_messages_count }}</span>{% endif %}</a>
 
     <div class="settings-fab-wrap" id="settingsWrap">
         <button type="button" class="settings-btn" onclick="toggleSettingsMenu()" title="Settings">⚙️</button>

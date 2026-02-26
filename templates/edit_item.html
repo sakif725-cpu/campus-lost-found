@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Item - Campus Lost & Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .container {
+            width: min(680px, calc(100% - 32px));
+            margin: 40px auto;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 22px;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+        }
+
+        .error {
+            margin-bottom: 12px;
+            color: #b91c1c;
+            background: #fee2e2;
+            border-radius: 8px;
+            padding: 9px 10px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 6px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #ffffff;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .save-btn {
+            background: #0f766e;
+        }
+
+        .cancel-btn {
+            background: #6b7280;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                margin: 20px auto;
+                padding: 16px;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .actions .btn {
+                width: 100%;
+                text-align: center;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Edit Post</h2>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="/edit/{{ item[0] }}" enctype="multipart/form-data">
+            <label>Title</label>
+            <input type="text" name="title" value="{{ item[1] }}" required>
+
+            <label>Description</label>
+            <input type="text" name="description" value="{{ item[2] }}" required>
+
+            <label>Location</label>
+            <input type="text" name="location" value="{{ item[3] }}" required>
+
+            <label>Date</label>
+            <input type="date" name="date" value="{{ item[4] }}" required>
+
+            <label>Type</label>
+            <select name="type">
+                <option value="Lost" {% if item[5] == 'Lost' %}selected{% endif %}>Lost</option>
+                <option value="Found" {% if item[5] == 'Found' %}selected{% endif %}>Found</option>
+            </select>
+
+            <label>Replace Image (optional)</label>
+            <input type="file" name="image">
+
+            <div class="actions">
+                <a href="/" class="btn cancel-btn">Cancel</a>
+                <button type="submit" class="btn save-btn">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

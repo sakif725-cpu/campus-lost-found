@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inbox - Campus Lost & Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .container {
+            width: min(780px, calc(100% - 32px));
+            margin: 30px auto;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            color: #ffffff;
+            background: #2563eb;
+            border-radius: 8px;
+            padding: 9px 12px;
+        }
+
+        .conversation {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #f9fafb;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .conversation:hover {
+            background: #f3f4f6;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .name {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .time {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .preview {
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            min-width: 18px;
+            text-align: center;
+            background: #dc2626;
+            color: #ffffff;
+            font-size: 12px;
+            border-radius: 999px;
+            padding: 2px 6px;
+            margin-left: 8px;
+        }
+
+        .empty {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: #f9fafb;
+            padding: 14px;
+            color: #4b5563;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                width: calc(100% - 20px);
+                margin: 16px auto;
+                padding: 14px;
+            }
+
+            .top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top">
+            <h2>Inbox</h2>
+            <a class="btn" href="/">Back to Home</a>
+        </div>
+
+        {% if conversations %}
+            {% for c in conversations %}
+                <a class="conversation" href="/chat/{{ c.partner_id }}">
+                    <div class="row">
+                        <div class="name">
+                            {{ c.partner_name }}
+                            {% if c.unread_count > 0 %}
+                                <span class="badge">{{ c.unread_count }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="time">{{ c.last_message_time }}</div>
+                    </div>
+                    <div class="preview">
+                        {% if c.last_sender_id == current_user_id %}You: {% endif %}{{ c.last_message_text }}
+                    </div>
+                </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty">No messages yet. Open a user's profile or a post and send your first message.</div>
+        {% endif %}
+    </div>
+</body>
+</html>
