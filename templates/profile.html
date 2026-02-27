@@ -46,6 +46,93 @@
             background: #f9fafb;
         }
 
+        .profile-photo {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #dbeafe;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .crop-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .crop-panel {
+            width: min(460px, 100%);
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 14px;
+            box-sizing: border-box;
+        }
+
+        .crop-title {
+            margin: 0 0 10px;
+            font-size: 18px;
+        }
+
+        .crop-canvas-wrap {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #d1d5db;
+            background: #f3f4f6;
+            margin-bottom: 10px;
+            touch-action: none;
+        }
+
+        #cropCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: grab;
+        }
+
+        #cropCanvas.dragging {
+            cursor: grabbing;
+        }
+
+        .crop-controls {
+            margin-bottom: 12px;
+        }
+
+        .crop-controls input[type="range"] {
+            margin-bottom: 0;
+        }
+
+        .crop-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .crop-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 9px 12px;
+            cursor: pointer;
+            color: #ffffff;
+        }
+
+        .crop-cancel {
+            background: #6b7280;
+        }
+
+        .crop-apply {
+            background: #0f766e;
+        }
+
         label {
             display: block;
             margin-bottom: 5px;
@@ -102,6 +189,11 @@
         </div>
 
         <div class="meta">
+            {% if user[7] %}
+                <img id="profilePhotoPreview" class="profile-photo" src="{{ url_for('static', filename='profile_photos/' + user[7]) }}" alt="My profile photo">
+            {% else %}
+                <img id="profilePhotoPreview" class="profile-photo" src="" alt="My profile photo" style="display:none;">
+            {% endif %}
             <strong>Username:</strong> {{ user[0] }}<br>
             <strong>Role:</strong> {{ user[1] }}
         </div>
@@ -110,7 +202,7 @@
             <div class="success">{{ success }}</div>
         {% endif %}
 
-        <form method="POST" action="/profile">
+        <form method="POST" action="/profile" enctype="multipart/form-data">
             <label>Full Name</label>
             <input type="text" name="full_name" value="{{ user[2] or '' }}">
 
@@ -126,8 +218,229 @@
             <label>Phone Number</label>
             <input type="text" name="phone" value="{{ user[6] or '' }}">
 
+            <label>Profile Photo</label>
+            <input type="file" id="profilePhotoInput" name="profile_photo" accept="image/*">
+
             <button type="submit">Update Profile</button>
         </form>
     </div>
+
+    <div id="cropModal" class="crop-modal" role="dialog" aria-modal="true" aria-label="Crop profile photo">
+        <div class="crop-panel">
+            <h3 class="crop-title">Crop Profile Photo</h3>
+            <div class="crop-canvas-wrap" id="cropCanvasWrap">
+                <canvas id="cropCanvas" width="360" height="360"></canvas>
+            </div>
+            <div class="crop-controls">
+                <label for="cropZoom">Zoom</label>
+                <input id="cropZoom" type="range" min="1" max="3" step="0.01" value="1">
+            </div>
+            <div class="crop-actions">
+                <button type="button" class="crop-btn crop-cancel" id="cropCancelBtn">Cancel</button>
+                <button type="button" class="crop-btn crop-apply" id="cropApplyBtn">Apply Crop</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const profilePhotoInput = document.getElementById('profilePhotoInput');
+        const profilePhotoPreview = document.getElementById('profilePhotoPreview');
+        const cropModal = document.getElementById('cropModal');
+        const cropCanvas = document.getElementById('cropCanvas');
+        const cropCanvasContext = cropCanvas.getContext('2d');
+        const cropZoom = document.getElementById('cropZoom');
+        const cropCancelBtn = document.getElementById('cropCancelBtn');
+        const cropApplyBtn = document.getElementById('cropApplyBtn');
+
+        let cropImage = null;
+        let baseScale = 1;
+        let zoomScale = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+
+        function openCropModal() {
+            cropModal.style.display = 'flex';
+        }
+
+        function closeCropModal(clearSelection) {
+            cropModal.style.display = 'none';
+            cropCanvas.classList.remove('dragging');
+            isDragging = false;
+            if (clearSelection) {
+                profilePhotoInput.value = '';
+            }
+        }
+
+        function drawCropCanvas() {
+            if (!cropImage) {
+                return;
+            }
+
+            const width = cropCanvas.width;
+            const height = cropCanvas.height;
+            cropCanvasContext.clearRect(0, 0, width, height);
+
+            const scale = baseScale * zoomScale;
+            const drawWidth = cropImage.width * scale;
+            const drawHeight = cropImage.height * scale;
+
+            cropCanvasContext.drawImage(cropImage, offsetX, offsetY, drawWidth, drawHeight);
+        }
+
+        function clampOffsets() {
+            if (!cropImage) {
+                return;
+            }
+
+            const scale = baseScale * zoomScale;
+            const drawWidth = cropImage.width * scale;
+            const drawHeight = cropImage.height * scale;
+
+            const minX = Math.min(0, cropCanvas.width - drawWidth);
+            const minY = Math.min(0, cropCanvas.height - drawHeight);
+            const maxX = 0;
+            const maxY = 0;
+
+            offsetX = Math.max(minX, Math.min(maxX, offsetX));
+            offsetY = Math.max(minY, Math.min(maxY, offsetY));
+        }
+
+        function initializeCropState() {
+            if (!cropImage) {
+                return;
+            }
+
+            baseScale = Math.max(cropCanvas.width / cropImage.width, cropCanvas.height / cropImage.height);
+            zoomScale = 1;
+            cropZoom.value = '1';
+
+            const drawWidth = cropImage.width * baseScale;
+            const drawHeight = cropImage.height * baseScale;
+            offsetX = (cropCanvas.width - drawWidth) / 2;
+            offsetY = (cropCanvas.height - drawHeight) / 2;
+
+            drawCropCanvas();
+        }
+
+        function getPointerPosition(event) {
+            const rect = cropCanvas.getBoundingClientRect();
+            const point = event.touches ? event.touches[0] : event;
+            return {
+                x: point.clientX - rect.left,
+                y: point.clientY - rect.top
+            };
+        }
+
+        profilePhotoInput.addEventListener('change', function () {
+            const selectedFile = profilePhotoInput.files && profilePhotoInput.files[0];
+            if (!selectedFile) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (loadEvent) {
+                const image = new Image();
+                image.onload = function () {
+                    cropImage = image;
+                    initializeCropState();
+                    openCropModal();
+                };
+                image.src = loadEvent.target.result;
+            };
+            reader.readAsDataURL(selectedFile);
+        });
+
+        cropZoom.addEventListener('input', function () {
+            const previousScale = baseScale * zoomScale;
+            zoomScale = Number(cropZoom.value);
+            const nextScale = baseScale * zoomScale;
+
+            const centerX = cropCanvas.width / 2;
+            const centerY = cropCanvas.height / 2;
+            const dx = centerX - offsetX;
+            const dy = centerY - offsetY;
+
+            offsetX = centerX - (dx * (nextScale / previousScale));
+            offsetY = centerY - (dy * (nextScale / previousScale));
+
+            clampOffsets();
+            drawCropCanvas();
+        });
+
+        cropCanvas.addEventListener('mousedown', function (event) {
+            isDragging = true;
+            const position = getPointerPosition(event);
+            dragStartX = position.x - offsetX;
+            dragStartY = position.y - offsetY;
+            cropCanvas.classList.add('dragging');
+        });
+
+        cropCanvas.addEventListener('mousemove', function (event) {
+            if (!isDragging) {
+                return;
+            }
+            const position = getPointerPosition(event);
+            offsetX = position.x - dragStartX;
+            offsetY = position.y - dragStartY;
+            clampOffsets();
+            drawCropCanvas();
+        });
+
+        document.addEventListener('mouseup', function () {
+            isDragging = false;
+            cropCanvas.classList.remove('dragging');
+        });
+
+        cropCanvas.addEventListener('touchstart', function (event) {
+            isDragging = true;
+            const position = getPointerPosition(event);
+            dragStartX = position.x - offsetX;
+            dragStartY = position.y - offsetY;
+        }, { passive: true });
+
+        cropCanvas.addEventListener('touchmove', function (event) {
+            if (!isDragging) {
+                return;
+            }
+            const position = getPointerPosition(event);
+            offsetX = position.x - dragStartX;
+            offsetY = position.y - dragStartY;
+            clampOffsets();
+            drawCropCanvas();
+        }, { passive: true });
+
+        cropCanvas.addEventListener('touchend', function () {
+            isDragging = false;
+        }, { passive: true });
+
+        cropCancelBtn.addEventListener('click', function () {
+            closeCropModal(true);
+        });
+
+        cropApplyBtn.addEventListener('click', function () {
+            cropCanvas.toBlob(function (blob) {
+                if (!blob) {
+                    closeCropModal(true);
+                    return;
+                }
+
+                const croppedFile = new File([blob], 'profile-photo.jpg', { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(croppedFile);
+                profilePhotoInput.files = dataTransfer.files;
+
+                if (profilePhotoPreview) {
+                    const previewUrl = URL.createObjectURL(blob);
+                    profilePhotoPreview.src = previewUrl;
+                    profilePhotoPreview.style.display = 'block';
+                }
+
+                closeCropModal(false);
+            }, 'image/jpeg', 0.92);
+        });
+    </script>
 </body>
 </html>

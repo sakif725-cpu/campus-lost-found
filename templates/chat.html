@@ -323,10 +323,10 @@
             {% endif %}
         </div>
 
-        <div id="messages" class="messages">
+        <div id="messages" class="messages" data-latest-message-id="{{ messages[-1][0] if messages else 0 }}">
             {% if messages %}
                 {% for msg in messages %}
-                    <div class="message {% if msg[1] == current_user_id %}mine{% else %}theirs{% endif %}">
+                    <div class="message {% if msg[1] == current_user_id %}mine{% else %}theirs{% endif %}" data-message-id="{{ msg[0] }}">
                         {% if msg[5] %}
                             <div class="message-item-ref"><strong>Item #{{ msg[5] }}</strong></div>
                         {% endif %}
@@ -356,7 +356,7 @@
         </div>
 
         <div class="compose">
-            <form id="chatForm" method="POST" action="/chat/{{ partner[0] }}/send" enctype="multipart/form-data">
+            <form id="chatForm" method="POST" action="/chat/{{ partner[0] }}/send" enctype="multipart/form-data" data-current-user-id="{{ current_user_id }}" data-partner-id="{{ partner[0] }}">
                 {% if chat_item_id %}
                     <input type="hidden" name="item_id" value="{{ chat_item_id }}">
                 {% endif %}
@@ -401,11 +401,15 @@
         const attachBtn = document.getElementById('attachBtn');
         const recordBtn = document.getElementById('recordBtn');
         const composePreview = document.getElementById('composePreview');
+        const currentUserId = Number(chatForm.dataset.currentUserId) || 0;
+        const partnerId = Number(chatForm.dataset.partnerId) || 0;
 
         let mediaRecorder = null;
         let mediaStream = null;
         let isRecording = false;
         let chunks = [];
+        let latestMessageId = Number(messagesBox.dataset.latestMessageId || '0') || 0;
+        let isFetchingMessages = false;
 
         function openImageViewer(imageSrc) {
             const viewer = document.getElementById('imageViewer');
@@ -441,6 +445,117 @@
                 composePreview.textContent = 'Recording voice... tap Voice again to stop.';
             } else {
                 composePreview.textContent = '';
+            }
+        }
+
+        function escapeHtml(text) {
+            return String(text || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function shouldAutoScroll() {
+            const threshold = 80;
+            return messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < threshold;
+        }
+
+        function appendMessage(messageData, forceScroll) {
+            if (!messageData || !messageData.id) {
+                return;
+            }
+
+            if (document.querySelector('.message[data-message-id="' + messageData.id + '"]')) {
+                latestMessageId = Math.max(latestMessageId, Number(messageData.id) || 0);
+                return;
+            }
+
+            const shouldScroll = forceScroll || shouldAutoScroll();
+            const isMine = Number(messageData.sender_id) === Number(currentUserId);
+
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message ' + (isMine ? 'mine' : 'theirs');
+            messageElement.setAttribute('data-message-id', String(messageData.id));
+
+            const itemRefHtml = messageData.item_id
+                ? '<div class="message-item-ref"><strong>Item #' + escapeHtml(messageData.item_id) + '</strong></div>'
+                : '';
+
+            let mediaHtml = '';
+            if (messageData.message_type === 'image' && messageData.media_url) {
+                mediaHtml =
+                    '<div class="message-media">' +
+                        '<img src="' + escapeHtml(messageData.media_url) + '" alt="Sent image">' +
+                    '</div>';
+            } else if (messageData.message_type === 'audio' && messageData.media_url) {
+                mediaHtml =
+                    '<div class="message-media">' +
+                        '<audio controls preload="metadata">' +
+                            '<source src="' + escapeHtml(messageData.media_url) + '">' +
+                            'Your browser does not support audio playback.' +
+                        '</audio>' +
+                    '</div>';
+            }
+
+            const textHtml = messageData.message_text
+                ? '<div>' + escapeHtml(messageData.message_text) + '</div>'
+                : '';
+
+            messageElement.innerHTML =
+                itemRefHtml +
+                mediaHtml +
+                textHtml +
+                '<div class="meta">' + escapeHtml(messageData.created_at) + '</div>';
+
+            const insertedImage = messageElement.querySelector('.message-media img');
+            if (insertedImage) {
+                insertedImage.addEventListener('click', function () {
+                    openImageViewer(insertedImage.src);
+                });
+            }
+
+            const emptyState = messagesBox.querySelector('.empty');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            messagesBox.appendChild(messageElement);
+            latestMessageId = Math.max(latestMessageId, Number(messageData.id) || 0);
+
+            if (shouldScroll) {
+                messagesBox.scrollTop = messagesBox.scrollHeight;
+            }
+        }
+
+        async function fetchNewMessages() {
+            if (isFetchingMessages) {
+                return;
+            }
+
+            isFetchingMessages = true;
+            try {
+                const response = await fetch('/chat/' + partnerId + '/messages?after_id=' + latestMessageId, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                if (!data.ok || !Array.isArray(data.messages) || !data.messages.length) {
+                    return;
+                }
+
+                data.messages.forEach(function (messageData) {
+                    appendMessage(messageData, false);
+                });
+            } finally {
+                isFetchingMessages = false;
             }
         }
 
@@ -521,24 +636,56 @@
             startRecording();
         });
 
-        chatForm.addEventListener('submit', function (event) {
+        chatForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
             const textValue = messageInput.value.trim();
             const hasImage = imageFileInput.files.length > 0;
             const hasAudio = audioFileInput.files.length > 0;
 
             if (!textValue && !hasImage && !hasAudio) {
-                event.preventDefault();
                 alert('Type a message, add a photo, or record voice before sending.');
+                return;
+            }
+
+            const formData = new FormData(chatForm);
+
+            try {
+                const response = await fetch(chatForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.ok) {
+                    if (data && data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                        return;
+                    }
+                    alert('Message could not be sent. Please try again.');
+                    return;
+                }
+
+                if (data.message) {
+                    appendMessage(data.message, true);
+                }
+
+                chatForm.reset();
+                chunks = [];
+                updateComposePreview();
+                messageInput.focus();
+            } catch (error) {
+                alert('Network issue while sending. Please try again.');
             }
         });
 
         setInterval(function () {
-            const isTyping = document.activeElement === messageInput && messageInput.value.trim() !== '';
-            const hasPendingMedia = imageFileInput.files.length > 0 || audioFileInput.files.length > 0;
-            if (!isTyping && !hasPendingMedia && !isRecording) {
-                window.location.reload();
-            }
-        }, 5000);
+            fetchNewMessages();
+        }, 3000);
 
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {

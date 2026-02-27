@@ -115,10 +115,15 @@
             <input type="date" name="date" value="{{ item[4] }}" required>
 
             <label>Type</label>
-            <select name="type">
+            <select id="editType" name="type" onchange="toggleEditBountyField()">
                 <option value="Lost" {% if item[5] == 'Lost' %}selected{% endif %}>Lost</option>
                 <option value="Found" {% if item[5] == 'Found' %}selected{% endif %}>Found</option>
             </select>
+
+            <div id="editBountyFieldWrap">
+                <label>Bounty Amount (optional, for Lost only)</label>
+                <input type="number" name="bounty_amount" min="0" step="0.01" value="{{ item[8] if item[8] is not none else '' }}" placeholder="e.g. 500">
+            </div>
 
             <label>Replace Image (optional)</label>
             <input type="file" name="image">
@@ -129,5 +134,18 @@
             </div>
         </form>
     </div>
+
+    <script>
+        function toggleEditBountyField() {
+            const itemTypeElement = document.getElementById('editType');
+            const bountyFieldWrap = document.getElementById('editBountyFieldWrap');
+            if (!itemTypeElement || !bountyFieldWrap) {
+                return;
+            }
+            bountyFieldWrap.style.display = itemTypeElement.value === 'Lost' ? 'block' : 'none';
+        }
+
+        toggleEditBountyField();
+    </script>
 </body>
 </html>

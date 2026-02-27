@@ -50,6 +50,7 @@
             padding: 16px;
             margin-bottom: 16px;
             backdrop-filter: blur(4px);
+            position: relative;
         }
 
         .post-head {
@@ -146,6 +147,14 @@
             border-radius: 8px;
             padding: 8px 10px;
             font-size: 14px;
+        }
+
+        .seen-by-chip {
+            grid-column: 1;
+        }
+
+        .bounty-chip {
+            grid-column: 2;
         }
 
         .meta-label {
@@ -365,21 +374,71 @@
             text-decoration: none;
         }
 
-        .post-menu-link {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            text-decoration: none;
+        .post-menu-wrap {
+            position: relative;
+            margin-left: auto;
+        }
+
+        .post-menu-btn {
+            border: none;
+            background: transparent;
             color: #374151;
             font-size: 24px;
             line-height: 1;
             padding: 2px 8px;
             border-radius: 8px;
+            cursor: pointer;
         }
 
-        .post-menu-link:hover {
+        .post-menu-btn:hover {
             background: #f3f4f6;
+        }
+
+        .post-menu-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            width: 160px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+            padding: 6px;
+            z-index: 1300;
+            opacity: 0;
+            transform: translateY(-6px) scale(0.98);
+            pointer-events: none;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+
+        .post-menu-dropdown.open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .post-menu-item {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            background: transparent;
+            text-align: left;
+            text-decoration: none;
+            color: #111827;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .post-menu-item:hover {
+            background: #f3f4f6;
+        }
+
+        .post-menu-item.delete {
+            color: #b91c1c;
+            font-weight: bold;
         }
 
         .comments-section {
@@ -850,14 +909,26 @@
                         <div class="post-user">
                             {% if item[8] %}
                                 <a class="profile-link" href="/users/{{ item[8] }}">
-                                    <div class="avatar">{{ (item[9] or 'U')[0]|upper }}</div>
+                                    <div class="avatar">
+                                        {% if item[11] %}
+                                            <img src="{{ url_for('static', filename='profile_photos/' + item[11]) }}" alt="{{ item[9] }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                                        {% else %}
+                                            {{ (item[9] or 'U')[0]|upper }}
+                                        {% endif %}
+                                    </div>
                                 </a>
                                 <a class="profile-link name-wrap" href="/users/{{ item[8] }}">
                                     <div class="student-name">{{ item[9] }}</div>
                                     <div class="post-date">{{ item[4] }}</div>
                                 </a>
                             {% else %}
-                                <div class="avatar">{{ (item[9] or 'U')[0]|upper }}</div>
+                                <div class="avatar">
+                                    {% if item[11] %}
+                                        <img src="{{ url_for('static', filename='profile_photos/' + item[11]) }}" alt="{{ item[9] }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                                    {% else %}
+                                        {{ (item[9] or 'U')[0]|upper }}
+                                    {% endif %}
+                                </div>
                                 <div class="name-wrap">
                                     <div class="student-name">{{ item[9] }}</div>
                                     <div class="post-date">{{ item[4] }}</div>
@@ -866,7 +937,15 @@
                         </div>
                         <span class="type-badge {% if item[5] == 'Found' %}found{% endif %}">{{ item[5] }}</span>
                         {% if session.get('role') == 'admin' or session.get('user_id') == item[8] %}
-                            <a href="/edit/{{ item[0] }}" class="post-menu-link" title="Edit Post">...</a>
+                            <div class="post-menu-wrap" data-post-menu-wrap>
+                                <button type="button" class="post-menu-btn" onclick="togglePostMenu({{ item[0] }})" title="Post Menu">...</button>
+                                <div class="post-menu-dropdown" id="postMenu-{{ item[0] }}">
+                                    <a href="/edit/{{ item[0] }}" class="post-menu-item">Edit Post</a>
+                                    <form method="POST" action="/delete/{{ item[0] }}" onsubmit="return confirm('Delete this post?');">
+                                        <button type="submit" class="post-menu-item delete">Delete Post</button>
+                                    </form>
+                                </div>
+                            </div>
                         {% endif %}
                     </div>
 
@@ -887,6 +966,20 @@
                             <span class="meta-label">Status</span>
                             <span class="{% if item[6] == 'Claimed' %}status-claimed{% else %}status-open{% endif %}">{{ item[6] }}</span>
                         </div>
+                        <div class="meta-chip seen-by-chip">
+                            <span class="meta-label">Seen By</span>
+                            {{ post_view_counts.get(item[0], 0) }} people
+                        </div>
+                        {% if item[5] == 'Lost' %}
+                            <div class="meta-chip bounty-chip">
+                                <span class="meta-label">Bounty Amount</span>
+                                {% if item[10] is not none %}
+                                    Rs {{ '%.2f'|format(item[10]) }}
+                                {% else %}
+                                    Not set
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     </div>
 
                     {% if item[6] != 'Claimed' and (session.get('role') == 'admin' or session.get('user_id') == item[8]) %}
@@ -940,6 +1033,7 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
             {% endfor %}
         {% else %}
@@ -962,6 +1056,7 @@
                     <a class="filter-link {% if current_filter == 'All' %}active-filter{% endif %}" href="{{ url_for('home', search=search_query) }}">All</a>
                     <a class="filter-link {% if current_filter == 'Lost' %}active-filter{% endif %}" href="{{ url_for('home', filter='Lost', search=search_query) }}">Lost</a>
                     <a class="filter-link {% if current_filter == 'Found' %}active-filter{% endif %}" href="{{ url_for('home', filter='Found', search=search_query) }}">Found</a>
+                    <a class="filter-link {% if current_filter == 'Claimed' %}active-filter{% endif %}" href="{{ url_for('home', filter='Claimed', search=search_query) }}">Claimed</a>
                 </div>
             </div>
         </div>
@@ -989,10 +1084,15 @@
             <input type="date" name="date" required>
 
             <label>Type:</label>
-            <select name="type">
+            <select id="postType" name="type" onchange="toggleBountyField()">
                 <option value="Lost">Lost</option>
                 <option value="Found">Found</option>
             </select>
+
+            <div id="bountyFieldWrap">
+                <label>Bounty Amount (optional, for Lost only):</label>
+                <input type="number" name="bounty_amount" min="0" step="0.01" placeholder="e.g. 500">
+            </div>
 
             <div class="modal-actions">
                 <button type="button" class="cancel-btn" onclick="closePostModal()">Cancel</button>
@@ -1018,8 +1118,29 @@
         }
     }
 
+    function closePostMenus() {
+        document.querySelectorAll('.post-menu-dropdown').forEach(function (menu) {
+            menu.classList.remove('open');
+        });
+    }
+
+    function togglePostMenu(itemId) {
+        const menu = document.getElementById('postMenu-' + itemId);
+        if (!menu) {
+            return;
+        }
+
+        const wasOpen = menu.classList.contains('open');
+        closePostMenus();
+        if (!wasOpen) {
+            closeSettingsMenu();
+            menu.classList.add('open');
+        }
+    }
+
     function openActionModal() {
         closeSettingsMenu();
+        closePostMenus();
         document.getElementById('mainOverlay').style.display = 'block';
         document.getElementById('actionModal').style.display = 'block';
     }
@@ -1038,6 +1159,7 @@
 
     function openPostModal() {
         closeSettingsMenu();
+        closePostMenus();
         document.getElementById('mainOverlay').style.display = 'block';
         document.getElementById('postModal').style.display = 'block';
     }
@@ -1045,6 +1167,15 @@
     function closePostModal() {
         document.getElementById('mainOverlay').style.display = 'none';
         document.getElementById('postModal').style.display = 'none';
+    }
+
+    function toggleBountyField() {
+        const postType = document.getElementById('postType');
+        const bountyWrap = document.getElementById('bountyFieldWrap');
+        if (!postType || !bountyWrap) {
+            return;
+        }
+        bountyWrap.style.display = postType.value === 'Lost' ? 'block' : 'none';
     }
 
     function closeAllModals() {
@@ -1058,6 +1189,7 @@
 
     function openCommentsModal(itemId) {
         closeSettingsMenu();
+        closePostMenus();
         const commentsModal = document.getElementById('commentsModal-' + itemId);
         if (commentsModal) {
             commentsModal.style.display = 'flex';
@@ -1087,6 +1219,7 @@
                 return;
             }
             closeSettingsMenu();
+            closePostMenus();
             closeAllModals();
         }
     });
@@ -1095,6 +1228,11 @@
         const settingsWrap = document.getElementById('settingsWrap');
         if (settingsWrap && !settingsWrap.contains(event.target)) {
             closeSettingsMenu();
+        }
+
+        const postMenuWrap = event.target.closest('[data-post-menu-wrap]');
+        if (!postMenuWrap) {
+            closePostMenus();
         }
     });
 
@@ -1128,6 +1266,8 @@
             commentElement.addEventListener('touchend', handleTouchEnd, { passive: true });
         });
     }
+
+    toggleBountyField();
 
     initializeCommentDoubleTapDelete();
 </script>
