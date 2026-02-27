@@ -204,36 +204,49 @@
             text-decoration: none;
         }
 
+        .items-header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .items-header h2 {
+            margin: 0;
+        }
+
+        .items-tools {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: nowrap;
+            margin-right: 0;
+            border: 2px solid #111111;
+            border-radius: 999px;
+            padding: 4px 10px;
+        }
+
         .settings-fab-wrap {
             position: relative;
-            position: fixed;
-            right: 24px;
-            bottom: 92px;
-            z-index: 1250;
         }
 
         .inbox-fab {
-            position: fixed;
-            right: 24px;
-            bottom: 156px;
-            width: 56px;
-            height: 56px;
-            display: flex;
+            position: relative;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            background: #2563eb;
-            color: #ffffff;
+            padding: 4px;
+            background: transparent;
+            color: #2563eb;
             text-decoration: none;
             font-size: 24px;
-            z-index: 1251;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
         }
 
         .inbox-badge {
             position: absolute;
-            top: -4px;
-            right: -4px;
+            top: -6px;
+            right: -6px;
             min-width: 18px;
             height: 18px;
             padding: 0 4px;
@@ -249,22 +262,26 @@
 
         .settings-btn {
             border: none;
-            border-radius: 50%;
-            background: #374151;
-            color: #ffffff;
-            width: 56px;
-            height: 56px;
+            background: transparent;
+            color: #374151;
+            width: auto;
+            height: auto;
+            padding: 4px;
             cursor: pointer;
             font-size: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+            text-shadow:
+                -1px -1px 0 #000,
+                 1px -1px 0 #000,
+                -1px  1px 0 #000,
+                 1px  1px 0 #000;
         }
 
         .settings-menu {
             position: absolute;
-            bottom: calc(100% + 8px);
+            top: calc(100% + 8px);
             right: 0;
             width: 190px;
             background: #ffffff;
@@ -319,6 +336,10 @@
                 linear-gradient(135deg, rgb(255, 0, 128), rgb(0, 170, 255), rgb(0, 255, 136)) border-box;
         }
 
+        .search-form button {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+
         button {
             padding: 10px 14px;
             border: none;
@@ -365,6 +386,8 @@
             margin-top: 12px;
             border-top: 1px solid #e5e7eb;
             padding-top: 10px;
+            display: flex;
+            justify-content: flex-end;
         }
 
         .comments-title {
@@ -388,18 +411,33 @@
             margin-bottom: 8px;
         }
 
+        .comment-deletable {
+            cursor: pointer;
+        }
+
         .comment-head {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             gap: 8px;
             margin-bottom: 4px;
             font-size: 12px;
             color: #6b7280;
         }
 
+        .comment-head-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .comment-user {
             font-weight: bold;
             color: #374151;
+        }
+
+        .comment-delete-form {
+            display: none;
         }
 
         .comment-text {
@@ -422,6 +460,72 @@
             border-radius: 8px;
         }
 
+        .open-comments-btn {
+            margin-top: 4px;
+        }
+
+        .comments-modal {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 1400;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .comments-modal-content {
+            width: min(94vw, 560px);
+            max-height: 85vh;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .comments-modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .comments-modal-head h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #111827;
+        }
+
+        .comments-modal-close {
+            border: 0;
+            background: transparent;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            color: #374151;
+        }
+
+        .comments-modal-body {
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .comments-modal .comment-form {
+            margin-top: 12px;
+            position: sticky;
+            bottom: 0;
+            background: #ffffff;
+            padding-top: 8px;
+        }
+
         .item-image {
             width: 100%;
             max-width: 100%;
@@ -431,19 +535,23 @@
         }
 
         .fab {
-            position: fixed;
-            right: 24px;
-            bottom: 24px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
+            position: static;
+            width: auto;
+            height: auto;
+            border-radius: 0;
             font-size: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
-            background: #2563eb;
-            z-index: 1200;
+            padding: 4px;
+            box-shadow: none;
+            background: transparent;
+            color: #2563eb;
+            text-shadow:
+                -1px -1px 0 #000,
+                 1px -1px 0 #000,
+                -1px  1px 0 #000,
+                 1px  1px 0 #000;
         }
 
         .overlay {
@@ -578,6 +686,37 @@
                 padding: 14px;
             }
 
+            .items-header {
+                gap: 8px;
+                align-items: center;
+            }
+
+            .items-header h2 {
+                font-size: 22px;
+                line-height: 1.2;
+                min-width: 0;
+            }
+
+            .items-tools {
+                margin-right: 0;
+                gap: 4px;
+                flex-shrink: 0;
+            }
+
+            .inbox-fab,
+            .settings-btn,
+            .fab {
+                min-width: 32px;
+                min-height: 32px;
+                font-size: 20px;
+                padding: 2px;
+            }
+
+            .inbox-badge {
+                top: -5px;
+                right: -5px;
+            }
+
             .topbar {
                 align-items: flex-start;
                 flex-direction: column;
@@ -614,6 +753,10 @@
                 padding: 12px;
             }
 
+            .post-head {
+                gap: 8px;
+            }
+
             .item-image {
                 width: 100%;
                 max-width: 100%;
@@ -635,29 +778,27 @@
                 width: 100%;
             }
 
-            .fab {
-                width: 50px;
-                height: 50px;
-                right: 16px;
-                bottom: 16px;
+            .comments-modal {
+                padding: 10px;
             }
 
-            .settings-fab-wrap {
-                right: 16px;
-                bottom: 74px;
+            .comments-modal-content {
+                width: 100%;
+                max-height: 90vh;
+                padding: 12px;
             }
 
-            .inbox-fab {
-                right: 16px;
-                bottom: 132px;
-                width: 50px;
-                height: 50px;
-                font-size: 22px;
+            .comments-modal .comment-form {
+                flex-direction: column;
             }
 
-            .settings-btn {
-                width: 50px;
-                height: 50px;
+            .comments-modal .comment-form button {
+                width: 100%;
+            }
+
+            .settings-menu {
+                right: auto;
+                left: 0;
             }
         }
     </style>
@@ -684,7 +825,23 @@
             <button type="submit">Search</button>
         </form>
 
-        <h2>All Items {% if current_filter != 'All' %}({{ current_filter }}){% endif %}</h2>
+        <div class="items-header">
+            <h2>All Items {% if current_filter != 'All' %}({{ current_filter }}){% endif %}</h2>
+            <div class="items-tools">
+                <a class="inbox-fab" href="/inbox" title="Inbox">💬{% if unread_messages_count > 0 %}<span class="inbox-badge">{{ unread_messages_count }}</span>{% endif %}</a>
+
+                <div class="settings-fab-wrap" id="settingsWrap">
+                    <button type="button" class="settings-btn" onclick="toggleSettingsMenu()" title="Settings">⚙️</button>
+                    <div class="settings-menu" id="settingsMenu">
+                        <a class="settings-link" href="/profile">My Profile</a>
+                        <a class="settings-link" href="/contact">Contact Us</a>
+                        <a class="settings-link logout" href="/logout">Logout</a>
+                    </div>
+                </div>
+
+                <button class="fab" type="button" onclick="openActionModal()" title="Post or Filter">✏️</button>
+            </div>
+        </div>
 
         {% if items %}
             {% for item in items %}
@@ -744,26 +901,44 @@
 
                     <div class="comments-section">
                         {% set post_comments = comments_by_item_id.get(item[0], []) %}
-                        <p class="comments-title">Comments ({{ post_comments|length }})</p>
+                        <button type="button" class="open-comments-btn" onclick="openCommentsModal({{ item[0] }})">Comments ({{ post_comments|length }})</button>
+                    </div>
 
-                        {% if post_comments %}
-                            <ul class="comment-list">
-                                {% for comment in post_comments %}
-                                    <li class="comment-item">
-                                        <div class="comment-head">
-                                            <span class="comment-user">{{ comment[4] }}</span>
-                                            <span>{{ comment[2] }}</span>
-                                        </div>
-                                        <p class="comment-text">{{ comment[1] }}</p>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
+                    <div id="commentsModal-{{ item[0] }}" class="comments-modal" onclick="closeCommentsModal({{ item[0] }})">
+                        <div class="comments-modal-content" onclick="event.stopPropagation()">
+                            <div class="comments-modal-head">
+                                <h3>Comments</h3>
+                                <button type="button" class="comments-modal-close" onclick="closeCommentsModal({{ item[0] }})" aria-label="Close comments">×</button>
+                            </div>
+                            <div class="comments-modal-body">
+                                {% if post_comments %}
+                                    <ul class="comment-list">
+                                        {% for comment in post_comments %}
+                                            {% set can_delete_comment = session.get('role') == 'admin' or (session.get('user_id')|string) == (comment[4]|string) %}
+                                            <li class="comment-item{% if can_delete_comment %} comment-deletable{% endif %}"{% if can_delete_comment %} data-delete-form-id="delete-comment-{{ comment[1] }}" title="Double tap to delete"{% endif %}>
+                                                <div class="comment-head">
+                                                    <span class="comment-user">{{ comment[5] }}</span>
+                                                    <div class="comment-head-right">
+                                                        <span>{{ comment[3] }}</span>
+                                                    </div>
+                                                </div>
+                                                <p class="comment-text">{{ comment[2] }}</p>
+                                                {% if can_delete_comment %}
+                                                    <form id="delete-comment-{{ comment[1] }}" method="POST" action="/comment/delete/{{ comment[1] }}" class="comment-delete-form"></form>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="comment-text">No comments yet.</p>
+                                {% endif %}
 
-                        <form method="POST" action="/comment/{{ item[0] }}" class="comment-form">
-                            <input type="text" name="comment_text" placeholder="Write a comment..." required>
-                            <button type="submit">Comment</button>
-                        </form>
+                                <form method="POST" action="/comment/{{ item[0] }}" class="comment-form">
+                                    <input type="text" name="comment_text" placeholder="Write a comment..." required>
+                                    <button type="submit">Comment</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             {% endfor %}
@@ -771,19 +946,6 @@
             <div class="card">No items posted yet.</div>
         {% endif %}
     </div>
-
-    <a class="inbox-fab" href="/inbox" title="Inbox">💬{% if unread_messages_count > 0 %}<span class="inbox-badge">{{ unread_messages_count }}</span>{% endif %}</a>
-
-    <div class="settings-fab-wrap" id="settingsWrap">
-        <button type="button" class="settings-btn" onclick="toggleSettingsMenu()" title="Settings">⚙️</button>
-        <div class="settings-menu" id="settingsMenu">
-            <a class="settings-link" href="/profile">My Profile</a>
-            <a class="settings-link" href="/contact">Contact Us</a>
-            <a class="settings-link logout" href="/logout">Logout</a>
-        </div>
-    </div>
-
-    <button class="fab" type="button" onclick="openActionModal()" title="Post or Filter">✏️</button>
 
     <div id="mainOverlay" class="overlay" onclick="closeAllModals()"></div>
 
@@ -889,6 +1051,24 @@
         document.getElementById('mainOverlay').style.display = 'none';
         document.getElementById('actionModal').style.display = 'none';
         document.getElementById('postModal').style.display = 'none';
+        document.querySelectorAll('.comments-modal').forEach(function (modal) {
+            modal.style.display = 'none';
+        });
+    }
+
+    function openCommentsModal(itemId) {
+        closeSettingsMenu();
+        const commentsModal = document.getElementById('commentsModal-' + itemId);
+        if (commentsModal) {
+            commentsModal.style.display = 'flex';
+        }
+    }
+
+    function closeCommentsModal(itemId) {
+        const commentsModal = document.getElementById('commentsModal-' + itemId);
+        if (commentsModal) {
+            commentsModal.style.display = 'none';
+        }
     }
 
     function openImageModal(imageSrc) {
@@ -917,6 +1097,39 @@
             closeSettingsMenu();
         }
     });
+
+    function initializeCommentDoubleTapDelete() {
+        const doubleTapDelayMs = 350;
+        const deletableComments = document.querySelectorAll('.comment-deletable');
+
+        deletableComments.forEach(function (commentElement) {
+            let lastTouchEnd = 0;
+
+            function requestDelete() {
+                const formId = commentElement.getAttribute('data-delete-form-id');
+                const deleteForm = formId ? document.getElementById(formId) : null;
+
+                if (deleteForm && confirm('Delete this comment?')) {
+                    deleteForm.submit();
+                }
+            }
+
+            function handleTouchEnd() {
+                const now = Date.now();
+                if (now - lastTouchEnd <= doubleTapDelayMs) {
+                    requestDelete();
+                    lastTouchEnd = 0;
+                    return;
+                }
+                lastTouchEnd = now;
+            }
+
+            commentElement.addEventListener('dblclick', requestDelete);
+            commentElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+        });
+    }
+
+    initializeCommentDoubleTapDelete();
 </script>
 </body>
 </html>

@@ -7,20 +7,21 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            background: #f3f4f6;
+            background: linear-gradient(140deg, #eef2ff, #f0f9ff);
             color: #1f2937;
         }
 
         .container {
-            width: min(860px, calc(100% - 24px));
+            width: min(920px, calc(100% - 24px));
             margin: 14px auto;
             display: grid;
             grid-template-rows: auto 1fr auto;
             height: calc(100vh - 28px);
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
             overflow: hidden;
+            backdrop-filter: blur(4px);
         }
 
         .top {
@@ -29,8 +30,8 @@
             align-items: center;
             gap: 8px;
             padding: 12px 14px;
-            border-bottom: 1px solid #e5e7eb;
-            background: #f9fafb;
+            border-bottom: 1px solid #dbeafe;
+            background: #f8fbff;
         }
 
         .top h3 {
@@ -48,16 +49,16 @@
             display: inline-block;
             text-decoration: none;
             color: #ffffff;
-            background: #2563eb;
+            background: linear-gradient(135deg, #2563eb, #4338ca);
             border-radius: 8px;
             padding: 8px 12px;
         }
 
         .item-ref {
             margin: 10px 12px 0;
-            background: #ecfeff;
-            border: 1px solid #a5f3fc;
-            color: #0f766e;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
             border-radius: 8px;
             padding: 8px 10px;
             font-size: 13px;
@@ -66,7 +67,7 @@
         .messages {
             padding: 12px;
             overflow-y: auto;
-            background: #f3f4f6;
+            background: #f5f9ff;
         }
 
         .message {
@@ -81,7 +82,7 @@
 
         .mine {
             margin-left: auto;
-            background: #2563eb;
+            background: linear-gradient(135deg, #2563eb, #4338ca);
             color: #ffffff;
             border-bottom-right-radius: 3px;
         }
@@ -94,6 +95,33 @@
             border-bottom-left-radius: 3px;
         }
 
+        .message-media {
+            margin-top: 6px;
+        }
+
+        .message-media img {
+            max-width: min(100%, 280px);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            display: block;
+            cursor: zoom-in;
+        }
+
+        .mine .message-media img {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .message-media audio {
+            width: min(280px, 100%);
+            max-width: 100%;
+        }
+
+        .message-item-ref {
+            font-size: 12px;
+            margin-bottom: 4px;
+            opacity: 0.95;
+        }
+
         .meta {
             font-size: 11px;
             opacity: 0.8;
@@ -101,29 +129,104 @@
         }
 
         .compose {
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid #dbeafe;
             background: #ffffff;
             padding: 10px;
         }
 
         .compose form {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr auto;
             gap: 8px;
+            align-items: center;
         }
 
         .compose input[type="text"] {
-            flex: 1;
+            width: 100%;
             padding: 10px;
             border: 1px solid #d1d5db;
             border-radius: 8px;
+            box-sizing: border-box;
         }
 
-        .compose button {
+        .compose-main {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .compose-tools {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .tool-btn,
+        .send-btn {
             border: none;
-            background: #0f766e;
             color: #ffffff;
             border-radius: 8px;
             padding: 10px 14px;
+            cursor: pointer;
+        }
+
+        .tool-btn {
+            padding: 10px 12px;
+            font-size: 14px;
+            background: #334155;
+        }
+
+        .send-btn {
+            background: #0f766e;
+        }
+
+        .tool-btn.recording {
+            background: #dc2626;
+        }
+
+        .compose-preview {
+            grid-column: 1 / -1;
+            font-size: 12px;
+            color: #475569;
+            min-height: 16px;
+        }
+
+        .hidden-input {
+            display: none;
+        }
+
+        .image-viewer {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.88);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            box-sizing: border-box;
+            cursor: zoom-out;
+        }
+
+        .image-viewer img {
+            max-width: 96vw;
+            max-height: 92vh;
+            border-radius: 10px;
+            border: 2px solid #ffffff;
+            object-fit: contain;
+        }
+
+        .image-viewer-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            border: 0;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
         }
 
@@ -145,6 +248,62 @@
             .message {
                 max-width: 88%;
             }
+
+            .compose form {
+                grid-template-columns: 1fr;
+            }
+
+            .compose-main {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .compose-tools {
+                justify-content: space-between;
+            }
+
+            .tool-btn,
+            .send-btn {
+                flex: 1;
+            }
+        }
+
+        html[data-device="desktop"] .container {
+            width: min(1220px, calc(100% - 48px));
+            margin: 22px auto;
+            height: calc(100vh - 44px);
+            border-radius: 18px;
+        }
+
+        html[data-device="desktop"] .top {
+            padding: 14px 18px;
+        }
+
+        html[data-device="desktop"] .top h3 {
+            font-size: 20px;
+        }
+
+        html[data-device="desktop"] .messages {
+            padding: 18px;
+        }
+
+        html[data-device="desktop"] .message {
+            max-width: 62%;
+            font-size: 15px;
+            padding: 10px 12px;
+        }
+
+        html[data-device="desktop"] .compose {
+            padding: 12px 14px;
+        }
+
+        html[data-device="desktop"] .compose form {
+            gap: 10px;
+        }
+
+        html[data-device="desktop"] .compose input[type="text"] {
+            padding: 12px;
+            font-size: 15px;
         }
     </style>
 </head>
@@ -169,9 +328,25 @@
                 {% for msg in messages %}
                     <div class="message {% if msg[1] == current_user_id %}mine{% else %}theirs{% endif %}">
                         {% if msg[5] %}
-                            <div><strong>Item #{{ msg[5] }}</strong></div>
+                            <div class="message-item-ref"><strong>Item #{{ msg[5] }}</strong></div>
                         {% endif %}
-                        <div>{{ msg[3] }}</div>
+
+                        {% if msg[6] == 'image' and msg[7] %}
+                            <div class="message-media">
+                                <img src="{{ url_for('static', filename='messages/' + msg[7]) }}" alt="Sent image" onclick="openImageViewer(this.src)">
+                            </div>
+                        {% elif msg[6] == 'audio' and msg[7] %}
+                            <div class="message-media">
+                                <audio controls preload="metadata">
+                                    <source src="{{ url_for('static', filename='messages/' + msg[7]) }}">
+                                    Your browser does not support audio playback.
+                                </audio>
+                            </div>
+                        {% endif %}
+
+                        {% if msg[3] %}
+                            <div>{{ msg[3] }}</div>
+                        {% endif %}
                         <div class="meta">{{ msg[4] }}</div>
                     </div>
                 {% endfor %}
@@ -181,27 +356,195 @@
         </div>
 
         <div class="compose">
-            <form method="POST" action="/chat/{{ partner[0] }}/send">
+            <form id="chatForm" method="POST" action="/chat/{{ partner[0] }}/send" enctype="multipart/form-data">
                 {% if chat_item_id %}
                     <input type="hidden" name="item_id" value="{{ chat_item_id }}">
                 {% endif %}
-                <input id="messageInput" type="text" name="message_text" placeholder="Type a message..." required>
-                <button type="submit">Send</button>
+                <div class="compose-main">
+                    <input id="messageInput" type="text" name="message_text" placeholder="Type a message...">
+                    <div class="compose-tools">
+                        <input id="imageFile" class="hidden-input" type="file" name="image_file" accept="image/*">
+                        <input id="audioFile" class="hidden-input" type="file" name="audio_file" accept="audio/*">
+                        <button id="attachBtn" type="button" class="tool-btn" title="Send photo">📷 Photo</button>
+                        <button id="recordBtn" type="button" class="tool-btn" title="Record voice">🎤 Voice</button>
+                        <button type="submit" class="send-btn">Send</button>
+                    </div>
+                </div>
+                <div id="composePreview" class="compose-preview"></div>
             </form>
         </div>
     </div>
 
+    <div id="imageViewer" class="image-viewer" onclick="closeImageViewer()">
+        <button type="button" class="image-viewer-close" aria-label="Close image" onclick="closeImageViewer()">×</button>
+        <img id="imageViewerImg" src="" alt="Chat image preview" onclick="event.stopPropagation()">
+    </div>
+
     <script>
+        function updateDeviceType() {
+            const isDesktopViewport = window.matchMedia('(min-width: 1024px)').matches;
+            const hasDesktopPointer = window.matchMedia('(pointer:fine)').matches;
+            const deviceType = (isDesktopViewport && hasDesktopPointer) ? 'desktop' : 'mobile';
+            document.documentElement.setAttribute('data-device', deviceType);
+        }
+
+        updateDeviceType();
+        window.addEventListener('resize', updateDeviceType);
+
         const messagesBox = document.getElementById('messages');
         messagesBox.scrollTop = messagesBox.scrollHeight;
 
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const imageFileInput = document.getElementById('imageFile');
+        const audioFileInput = document.getElementById('audioFile');
+        const attachBtn = document.getElementById('attachBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const composePreview = document.getElementById('composePreview');
+
+        let mediaRecorder = null;
+        let mediaStream = null;
+        let isRecording = false;
+        let chunks = [];
+
+        function openImageViewer(imageSrc) {
+            const viewer = document.getElementById('imageViewer');
+            const image = document.getElementById('imageViewerImg');
+            image.src = imageSrc;
+            viewer.style.display = 'flex';
+        }
+
+        function closeImageViewer() {
+            const viewer = document.getElementById('imageViewer');
+            const image = document.getElementById('imageViewerImg');
+            viewer.style.display = 'none';
+            image.src = '';
+        }
+
+        function setAudioBlob(blob) {
+            const voiceFile = new File([blob], 'voice-note.webm', { type: 'audio/webm' });
+            const dt = new DataTransfer();
+            dt.items.add(voiceFile);
+            audioFileInput.files = dt.files;
+            imageFileInput.value = '';
+        }
+
+        function updateComposePreview() {
+            const imageName = imageFileInput.files.length ? imageFileInput.files[0].name : '';
+            const audioName = audioFileInput.files.length ? audioFileInput.files[0].name : '';
+
+            if (imageName) {
+                composePreview.textContent = 'Photo selected: ' + imageName;
+            } else if (audioName) {
+                composePreview.textContent = 'Voice selected: ' + audioName;
+            } else if (isRecording) {
+                composePreview.textContent = 'Recording voice... tap Voice again to stop.';
+            } else {
+                composePreview.textContent = '';
+            }
+        }
+
+        async function startRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+                alert('Voice recording is not supported in this browser.');
+                return;
+            }
+
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                chunks = [];
+                mediaRecorder = new MediaRecorder(mediaStream);
+
+                mediaRecorder.ondataavailable = function (event) {
+                    if (event.data && event.data.size > 0) {
+                        chunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = function () {
+                    if (chunks.length) {
+                        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+                        setAudioBlob(audioBlob);
+                    }
+
+                    if (mediaStream) {
+                        mediaStream.getTracks().forEach(function (track) { track.stop(); });
+                        mediaStream = null;
+                    }
+
+                    isRecording = false;
+                    recordBtn.classList.remove('recording');
+                    recordBtn.textContent = '🎤 Voice';
+                    updateComposePreview();
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                recordBtn.classList.add('recording');
+                recordBtn.textContent = '⏹ Stop';
+                imageFileInput.value = '';
+                updateComposePreview();
+            } catch (error) {
+                alert('Microphone access was blocked. Please allow microphone permission.');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+            }
+        }
+
+        attachBtn.addEventListener('click', function () {
+            imageFileInput.click();
+        });
+
+        imageFileInput.addEventListener('change', function () {
+            if (imageFileInput.files.length) {
+                audioFileInput.value = '';
+            }
+            updateComposePreview();
+        });
+
+        audioFileInput.addEventListener('change', function () {
+            if (audioFileInput.files.length) {
+                imageFileInput.value = '';
+            }
+            updateComposePreview();
+        });
+
+        recordBtn.addEventListener('click', function () {
+            if (isRecording) {
+                stopRecording();
+                return;
+            }
+            startRecording();
+        });
+
+        chatForm.addEventListener('submit', function (event) {
+            const textValue = messageInput.value.trim();
+            const hasImage = imageFileInput.files.length > 0;
+            const hasAudio = audioFileInput.files.length > 0;
+
+            if (!textValue && !hasImage && !hasAudio) {
+                event.preventDefault();
+                alert('Type a message, add a photo, or record voice before sending.');
+            }
+        });
+
         setInterval(function () {
-            const messageInput = document.getElementById('messageInput');
             const isTyping = document.activeElement === messageInput && messageInput.value.trim() !== '';
-            if (!isTyping) {
+            const hasPendingMedia = imageFileInput.files.length > 0 || audioFileInput.files.length > 0;
+            if (!isTyping && !hasPendingMedia && !isRecording) {
                 window.location.reload();
             }
         }, 5000);
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeImageViewer();
+            }
+        });
     </script>
 </body>
 </html>

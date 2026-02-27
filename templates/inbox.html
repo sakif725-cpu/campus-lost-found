@@ -7,50 +7,64 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            background: #f3f4f6;
+            background: linear-gradient(140deg, #eef2ff, #f0f9ff);
             color: #1f2937;
         }
 
         .container {
-            width: min(780px, calc(100% - 32px));
-            margin: 30px auto;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
+            width: min(860px, calc(100% - 24px));
+            margin: 16px auto;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
+            padding: 16px;
             box-sizing: border-box;
+            backdrop-filter: blur(4px);
         }
 
         .top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 14px;
-            gap: 8px;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        .top h2 {
+            margin: 0;
         }
 
         .btn {
             display: inline-block;
             text-decoration: none;
             color: #ffffff;
-            background: #2563eb;
+            background: linear-gradient(135deg, #2563eb, #4338ca);
             border-radius: 8px;
             padding: 9px 12px;
+        }
+
+        .sub {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 12px;
         }
 
         .conversation {
             display: block;
             text-decoration: none;
             color: inherit;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            background: #f9fafb;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            background: #ffffff;
             padding: 12px;
             margin-bottom: 10px;
+            transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
         }
 
         .conversation:hover {
-            background: #f3f4f6;
+            transform: translateY(-1px);
+            border-color: #93c5fd;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.14);
         }
 
         .row {
@@ -58,22 +72,60 @@
             justify-content: space-between;
             align-items: center;
             gap: 8px;
-            margin-bottom: 6px;
+            margin-bottom: 7px;
+        }
+
+        .left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .name-wrap {
+            min-width: 0;
+        }
+
+        .name-line {
+            font-weight: bold;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
         }
 
         .name {
-            font-weight: bold;
-            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .time {
             color: #6b7280;
             font-size: 12px;
+            flex-shrink: 0;
         }
 
         .preview {
             color: #374151;
             font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .badge {
@@ -89,17 +141,17 @@
         }
 
         .empty {
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            background: #f9fafb;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            background: #ffffff;
             padding: 14px;
             color: #4b5563;
         }
 
         @media (max-width: 640px) {
             .container {
-                width: calc(100% - 20px);
-                margin: 16px auto;
+                width: calc(100% - 12px);
+                margin: 8px auto;
                 padding: 14px;
             }
 
@@ -107,6 +159,38 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+
+            .row {
+                align-items: flex-start;
+            }
+
+            .time {
+                font-size: 11px;
+            }
+        }
+
+        html[data-device="desktop"] .container {
+            width: min(1180px, calc(100% - 64px));
+            margin: 24px auto;
+            padding: 20px;
+            border-radius: 18px;
+        }
+
+        html[data-device="desktop"] .top {
+            margin-bottom: 14px;
+        }
+
+        html[data-device="desktop"] .conversation {
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        html[data-device="desktop"] .name {
+            font-size: 16px;
+        }
+
+        html[data-device="desktop"] .preview {
+            font-size: 15px;
         }
     </style>
 </head>
@@ -116,16 +200,22 @@
             <h2>Inbox</h2>
             <a class="btn" href="/">Back to Home</a>
         </div>
+        <div class="sub">View all conversations and recent photo/voice updates.</div>
 
         {% if conversations %}
             {% for c in conversations %}
                 <a class="conversation" href="/chat/{{ c.partner_id }}">
                     <div class="row">
-                        <div class="name">
-                            {{ c.partner_name }}
-                            {% if c.unread_count > 0 %}
-                                <span class="badge">{{ c.unread_count }}</span>
-                            {% endif %}
+                        <div class="left">
+                            <div class="avatar">{{ (c.partner_name or 'U')[0]|upper }}</div>
+                            <div class="name-wrap">
+                                <div class="name-line">
+                                    <span class="name">{{ c.partner_name }}</span>
+                                    {% if c.unread_count > 0 %}
+                                        <span class="badge">{{ c.unread_count }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                         <div class="time">{{ c.last_message_time }}</div>
                     </div>
@@ -138,5 +228,17 @@
             <div class="empty">No messages yet. Open a user's profile or a post and send your first message.</div>
         {% endif %}
     </div>
+
+    <script>
+        function updateDeviceType() {
+            const isDesktopViewport = window.matchMedia('(min-width: 1024px)').matches;
+            const hasDesktopPointer = window.matchMedia('(pointer:fine)').matches;
+            const deviceType = (isDesktopViewport && hasDesktopPointer) ? 'desktop' : 'mobile';
+            document.documentElement.setAttribute('data-device', deviceType);
+        }
+
+        updateDeviceType();
+        window.addEventListener('resize', updateDeviceType);
+    </script>
 </body>
 </html>

@@ -1,13 +1,36 @@
 from flask import Flask, render_template, request, redirect, session
 import sqlite3
 import os
+import uuid
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'admin-secret-key')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['MESSAGE_MEDIA_FOLDER'] = 'static/messages'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['MESSAGE_MEDIA_FOLDER'], exist_ok=True)
+
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'ogg', 'm4a', 'webm', 'aac'}
+
+
+def is_allowed_file(filename, allowed_extensions):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
+
+def save_message_media(file_storage, allowed_extensions):
+    if not file_storage or file_storage.filename == '':
+        return None
+
+    if not is_allowed_file(file_storage.filename, allowed_extensions):
+        return None
+
+    original_name = secure_filename(file_storage.filename)
+    unique_name = f"{uuid.uuid4().hex}_{original_name}"
+    file_storage.save(os.path.join(app.config['MESSAGE_MEDIA_FOLDER'], unique_name))
+    return unique_name
 
 
 def is_user_logged_in():
@@ -97,6 +120,8 @@ def init_db():
             receiver_id INTEGER NOT NULL,
             item_id INTEGER,
             message_text TEXT NOT NULL,
+            message_type TEXT DEFAULT 'text',
+            media_filename TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             is_read INTEGER DEFAULT 0,
             FOREIGN KEY(sender_id) REFERENCES users(id),
@@ -104,6 +129,13 @@ def init_db():
             FOREIGN KEY(item_id) REFERENCES items(id)
         )
     ''')
+
+    cursor.execute("PRAGMA table_info(messages)")
+    message_columns = [column[1] for column in cursor.fetchall()]
+    if 'message_type' not in message_columns:
+        cursor.execute("ALTER TABLE messages ADD COLUMN message_type TEXT DEFAULT 'text'")
+    if 'media_filename' not in message_columns:
+        cursor.execute("ALTER TABLE messages ADD COLUMN media_filename TEXT")
 
     cursor.execute("PRAGMA table_info(items)")
     columns = [column[1] for column in cursor.fetchall()]
@@ -174,6 +206,7 @@ def home():
         comment_query = f'''
             SELECT
                 comments.item_id,
+                comments.id,
                 comments.comment_text,
                 comments.created_at,
                 comments.user_id,
@@ -328,6 +361,28 @@ def add_comment(item_id):
             (item_id, session.get('user_id'), comment_text)
         )
         conn.commit()
+
+    conn.close()
+    return redirect('/')
+
+
+@app.route('/comment/delete/<int:comment_id>', methods=['POST'])
+def delete_comment(comment_id):
+    if not is_user_logged_in():
+        return redirect('/login')
+
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT user_id FROM comments WHERE id = ?", (comment_id,))
+    comment = cursor.fetchone()
+
+    if comment:
+        comment_owner_user_id = comment[0]
+        current_user_id = session.get('user_id')
+        if session.get('role') == 'admin' or str(comment_owner_user_id) == str(current_user_id):
+            cursor.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
+            conn.commit()
 
     conn.close()
     return redirect('/')
@@ -513,19 +568,25 @@ def inbox():
             continue
 
         cursor.execute(
-            "SELECT sender_id, message_text, created_at FROM messages WHERE id = ?",
+            "SELECT sender_id, message_text, created_at, message_type, media_filename FROM messages WHERE id = ?",
             (last_message_id,)
         )
         last_message = cursor.fetchone()
         if not last_message:
             continue
 
+        last_message_text = last_message[1] or ''
+        if last_message[3] == 'image':
+            last_message_text = '[Photo]'
+        elif last_message[3] == 'audio':
+            last_message_text = '[Voice message]'
+
         conversations.append({
             'partner_id': partner[0],
             'partner_username': partner[1],
             'partner_name': partner[2] or partner[1],
             'last_sender_id': last_message[0],
-            'last_message_text': last_message[1],
+            'last_message_text': last_message_text,
             'last_message_time': last_message[2],
             'unread_count': unread_count or 0
         })
@@ -567,7 +628,7 @@ def chat(user_id):
 
     cursor.execute(
         '''
-        SELECT id, sender_id, receiver_id, message_text, created_at, item_id
+        SELECT id, sender_id, receiver_id, message_text, created_at, item_id, message_type, media_filename
         FROM messages
         WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
         ORDER BY id ASC
@@ -604,6 +665,8 @@ def send_message(user_id):
 
     message_text = request.form.get('message_text', '').strip()
     item_id_text = request.form.get('item_id', '').strip()
+    image_file = request.files.get('image_file')
+    audio_file = request.files.get('audio_file')
     item_id = None
     if item_id_text.isdigit():
         item_id = int(item_id_text)
@@ -623,10 +686,23 @@ def send_message(user_id):
         if not item_exists:
             item_id = None
 
-    if message_text:
+    message_type = 'text'
+    media_filename = None
+
+    saved_image = save_message_media(image_file, ALLOWED_IMAGE_EXTENSIONS)
+    saved_audio = save_message_media(audio_file, ALLOWED_AUDIO_EXTENSIONS)
+
+    if saved_image:
+        message_type = 'image'
+        media_filename = saved_image
+    elif saved_audio:
+        message_type = 'audio'
+        media_filename = saved_audio
+
+    if message_text or media_filename:
         cursor.execute(
-            "INSERT INTO messages (sender_id, receiver_id, item_id, message_text) VALUES (?, ?, ?, ?)",
-            (current_user_id, user_id, item_id, message_text)
+            "INSERT INTO messages (sender_id, receiver_id, item_id, message_text, message_type, media_filename) VALUES (?, ?, ?, ?, ?, ?)",
+            (current_user_id, user_id, item_id, message_text, message_type, media_filename)
         )
         conn.commit()
 
