@@ -17,7 +17,8 @@ except Exception:
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY')
 if not app.secret_key:
-    raise RuntimeError('SECRET_KEY environment variable is required')
+    app.secret_key = os.urandom(32).hex()
+    print('Warning: SECRET_KEY environment variable is not set; using an ephemeral key. Set SECRET_KEY in production.')
 app.config['MESSAGE_MEDIA_FOLDER'] = 'static/messages'
 app.config['PROFILE_IMAGE_FOLDER'] = 'static/profile_photos'
 app.config['ITEM_IMAGE_FOLDER'] = 'static/uploads'
