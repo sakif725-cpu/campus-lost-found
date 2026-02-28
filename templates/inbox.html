@@ -20,6 +20,24 @@
             padding: 16px;
             box-sizing: border-box;
             backdrop-filter: blur(4px);
+            animation: inboxSlideIn 0.25s ease;
+        }
+
+        @keyframes inboxSlideIn {
+            from {
+                transform: translateX(28px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .container {
+                animation: none;
+            }
         }
 
         .top {
@@ -34,13 +52,27 @@
             margin: 0;
         }
 
-        .btn {
-            display: inline-block;
+        .close-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
             text-decoration: none;
-            color: #ffffff;
-            background: linear-gradient(135deg, #2563eb, #4338ca);
+            color: #1f2937;
+            border: 1px solid #dbeafe;
             border-radius: 8px;
-            padding: 9px 12px;
+            background: #ffffff;
+            font-size: 24px;
+            line-height: 1;
+            margin-left: auto;
+            cursor: pointer;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .close-btn:hover {
+            border-color: #93c5fd;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.14);
         }
 
         .sub {
@@ -59,6 +91,22 @@
             padding: 12px;
             margin-bottom: 10px;
             transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+        }
+
+        .conversation.theme-0 {
+            background: linear-gradient(135deg, #ffffff, #eff6ff);
+        }
+
+        .conversation.theme-1 {
+            background: linear-gradient(135deg, #ffffff, #ecfeff);
+        }
+
+        .conversation.theme-2 {
+            background: linear-gradient(135deg, #ffffff, #f5f3ff);
+        }
+
+        .conversation.theme-3 {
+            background: linear-gradient(135deg, #ffffff, #f0fdf4);
         }
 
         .conversation:hover {
@@ -155,11 +203,6 @@
                 padding: 14px;
             }
 
-            .top {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
             .row {
                 align-items: flex-start;
             }
@@ -198,13 +241,17 @@
     <div class="container">
         <div class="top">
             <h2>Inbox</h2>
-            <a class="btn" href="/">Back to Home</a>
+            <a
+                class="close-btn"
+                href="/"
+                aria-label="Go to homepage"
+            >&times;</a>
         </div>
         <div class="sub">View all conversations and recent photo/voice updates.</div>
 
         {% if conversations %}
             {% for c in conversations %}
-                <a class="conversation" href="/chat/{{ c.partner_id }}">
+                <a class="conversation theme-{{ loop.index0 % 4 }}" href="/chat/{{ c.partner_id }}">
                     <div class="row">
                         <div class="left">
                             <div class="avatar">{{ (c.partner_name or 'U')[0]|upper }}</div>

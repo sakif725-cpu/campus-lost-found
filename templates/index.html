@@ -1,1275 +1,940 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="h-full">
 <head>
-    <title>Campus Lost & Found</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Lost &amp; Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+    </script>
     <style>
+        :root {
+            --theme-page-bg: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+            --theme-header-bg: rgba(255, 255, 255, 0.85);
+            --theme-header-border: rgba(148, 163, 184, 0.35);
+            --theme-surface-border: rgba(255, 255, 255, 0.5);
+        }
+
+        html[data-theme="ocean"] {
+            --theme-page-bg: linear-gradient(180deg, #f0f9ff 0%, #dbeafe 100%);
+            --theme-header-bg: rgba(240, 249, 255, 0.88);
+            --theme-header-border: rgba(125, 211, 252, 0.45);
+            --theme-surface-border: rgba(186, 230, 253, 0.7);
+        }
+
+        html[data-theme="sunset"] {
+            --theme-page-bg: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+            --theme-header-bg: rgba(255, 247, 237, 0.9);
+            --theme-header-border: rgba(253, 186, 116, 0.45);
+            --theme-surface-border: rgba(254, 215, 170, 0.7);
+        }
+
+        html[data-theme="forest"] {
+            --theme-page-bg: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+            --theme-header-bg: rgba(240, 253, 244, 0.9);
+            --theme-header-border: rgba(134, 239, 172, 0.45);
+            --theme-surface-border: rgba(187, 247, 208, 0.7);
+        }
+
+        html[data-theme="violet"] {
+            --theme-page-bg: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+            --theme-header-bg: rgba(245, 243, 255, 0.9);
+            --theme-header-border: rgba(196, 181, 253, 0.45);
+            --theme-surface-border: rgba(221, 214, 254, 0.7);
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background: transparent;
-            color: #1f2937;
-            position: relative;
-            min-height: 100vh;
+            background: var(--theme-page-bg) !important;
         }
 
-        .live-bg {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            background:
-                radial-gradient(circle at 10% 16%, rgba(59, 130, 246, 0.34), transparent 36%),
-                radial-gradient(circle at 88% 20%, rgba(20, 184, 166, 0.30), transparent 38%),
-                radial-gradient(circle at 48% 86%, rgba(168, 85, 247, 0.26), transparent 40%),
-                linear-gradient(125deg, #f8fafc, #e0e7ff, #cffafe, #f5d0fe);
-            background-size: 135% 135%, 135% 135%, 135% 135%, 240% 240%;
-            animation: liveBgMove 12s ease-in-out infinite alternate;
+        .app-header {
+            background: var(--theme-header-bg);
+            border-color: var(--theme-header-border);
         }
 
-        @keyframes liveBgMove {
-            0% {
-                background-position: 0% 0%, 100% 0%, 50% 100%, 0% 50%;
-            }
-            100% {
-                background-position: 14% 12%, 86% 10%, 48% 84%, 100% 50%;
-            }
+        .surface {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.78);
+            border-color: var(--theme-surface-border);
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 24px;
+        .dark .surface {
+            background: rgba(15, 23, 42, 0.72);
         }
 
-        .card {
-            background:
-                linear-gradient(rgba(255, 255, 255, 0.90), rgba(255, 255, 255, 0.90)) padding-box,
-                linear-gradient(135deg, #2563eb, #14b8a6, #7c3aed, #f59e0b) border-box;
-            border: 2px solid transparent;
-            border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 16px;
-            backdrop-filter: blur(4px);
-            position: relative;
+        .card-lift {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .post-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            position: relative;
+        .card-lift:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1);
         }
 
-        .post-user {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
+        body.overflow-hidden .card-lift:hover {
+            transform: none;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
 
-        .avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #dbeafe;
-            color: #1d4ed8;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-
-        .name-wrap {
-            min-width: 0;
-        }
-
-        .student-name {
-            font-weight: bold;
-            font-size: 15px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .profile-link {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .profile-link:hover .student-name {
-            text-decoration: underline;
-        }
-
-        .post-date {
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .type-badge {
-            font-size: 12px;
-            font-weight: bold;
-            padding: 6px 10px;
-            border-radius: 999px;
-            color: #fff;
-            background: #2563eb;
-            flex-shrink: 0;
-        }
-
-        .type-badge.found {
-            background: #0f766e;
-        }
-
-        .post-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin: 0 0 8px;
-        }
-
-        .post-text {
-            margin: 0 0 10px;
-            line-height: 1.5;
-            color: #374151;
-        }
-
-        .meta-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .meta-chip {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 8px 10px;
-            font-size: 14px;
-        }
-
-        .seen-by-chip {
-            grid-column: 1;
-        }
-
-        .bounty-chip {
-            grid-column: 2;
-        }
-
-        .meta-label {
-            color: #6b7280;
-            font-size: 12px;
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        .status-claimed {
-            color: #0f766e;
-            font-weight: bold;
-        }
-
-        .status-open {
-            color: #b45309;
-            font-weight: bold;
-        }
-
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 18px;
-        }
-
-        .title-banner {
-            min-height: 78px;
-            width: min(460px, 100%);
-            border-radius: 12px;
-            background-image: linear-gradient(rgba(17, 24, 39, 0.45), rgba(17, 24, 39, 0.45)), url("{{ url_for('static', filename='images/yoSHAKIF2.jpg') }}");
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            padding: 10px 16px;
-            box-sizing: border-box;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .title-banner h1 {
-            margin: 0;
-            color: #ffffff;
-            font-size: 30px;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-        }
-
-        .logout-btn {
-            display: inline-block;
-            padding: 10px 14px;
-            border-radius: 8px;
-            background: #dc2626;
-            color: #ffffff;
-            text-decoration: none;
-        }
-
-        .items-header {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .items-header h2 {
-            margin: 0;
-        }
-
-        .items-tools {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: nowrap;
-            margin-right: 0;
-            border: 2px solid #111111;
-            border-radius: 999px;
-            padding: 4px 10px;
-        }
-
-        .settings-fab-wrap {
-            position: relative;
-        }
-
-        .inbox-fab {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4px;
-            background: transparent;
-            color: #2563eb;
-            text-decoration: none;
-            font-size: 24px;
-        }
-
-        .inbox-badge {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            min-width: 18px;
-            height: 18px;
-            padding: 0 4px;
-            border-radius: 999px;
-            background: #dc2626;
-            color: #ffffff;
-            font-size: 11px;
-            line-height: 18px;
-            text-align: center;
-            border: 2px solid #ffffff;
-            box-sizing: border-box;
-        }
-
-        .settings-btn {
-            border: none;
-            background: transparent;
-            color: #374151;
-            width: auto;
-            height: auto;
-            padding: 4px;
-            cursor: pointer;
-            font-size: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-shadow:
-                -1px -1px 0 #000,
-                 1px -1px 0 #000,
-                -1px  1px 0 #000,
-                 1px  1px 0 #000;
-        }
-
-        .settings-menu {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            width: 190px;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
-            padding: 6px;
-            z-index: 1300;
-            opacity: 0;
-            transform: translateY(-6px) scale(0.98);
-            pointer-events: none;
-            transition: opacity 0.22s ease, transform 0.22s ease;
-        }
-
-        .settings-menu.open {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            pointer-events: auto;
-        }
-
-        .settings-link {
-            display: block;
-            text-decoration: none;
-            color: #111827;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .settings-link:hover {
-            background: #f3f4f6;
-        }
-
-        .settings-link.logout {
-            color: #b91c1c;
-            font-weight: bold;
-        }
-
-        .search-form {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        .search-form input {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            background:
-                linear-gradient(#ffffff, #ffffff) padding-box,
-                linear-gradient(135deg, rgb(255, 0, 128), rgb(0, 170, 255), rgb(0, 255, 136)) border-box;
-        }
-
-        .search-form button {
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
-        }
-
-        button {
-            padding: 10px 14px;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #2563eb, #4f46e5);
-            color: white;
-            cursor: pointer;
-        }
-
-        .claim-btn {
-            margin-top: 8px;
-            background: linear-gradient(135deg, #0f766e, #14b8a6);
-        }
-
-        .message-btn {
-            margin-top: 8px;
-            margin-left: 8px;
-            display: inline-block;
-            padding: 10px 14px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
-            color: #ffffff;
-            text-decoration: none;
-        }
-
-        .post-menu-wrap {
-            position: relative;
-            margin-left: auto;
-        }
-
-        .post-menu-btn {
-            border: none;
-            background: transparent;
-            color: #374151;
-            font-size: 24px;
-            line-height: 1;
-            padding: 2px 8px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .post-menu-btn:hover {
-            background: #f3f4f6;
-        }
-
+        .menu-panel,
         .post-menu-dropdown {
-            position: absolute;
-            top: calc(100% + 6px);
-            right: 0;
-            width: 160px;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
-            padding: 6px;
-            z-index: 1300;
             opacity: 0;
             transform: translateY(-6px) scale(0.98);
             pointer-events: none;
-            transition: opacity 0.22s ease, transform 0.22s ease;
+            transition: opacity 0.2s ease, transform 0.2s ease;
         }
 
+        .menu-panel.open,
         .post-menu-dropdown.open {
             opacity: 1;
             transform: translateY(0) scale(1);
             pointer-events: auto;
         }
 
-        .post-menu-item {
-            display: block;
-            width: 100%;
-            box-sizing: border-box;
-            border: none;
-            background: transparent;
-            text-align: left;
-            text-decoration: none;
-            color: #111827;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
+        .base-modal {
+            opacity: 0;
+            transform: scale(0.96);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
         }
 
-        .post-menu-item:hover {
-            background: #f3f4f6;
+        .base-modal.open {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
         }
 
-        .post-menu-item.delete {
-            color: #b91c1c;
-            font-weight: bold;
+        .support-panel {
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
         }
 
-        .comments-section {
-            margin-top: 12px;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 10px;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .comments-title {
-            margin: 0 0 8px;
-            font-size: 14px;
-            color: #374151;
-            font-weight: bold;
-        }
-
-        .comment-list {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-
-        .comment-item {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 8px 10px;
-            margin-bottom: 8px;
-        }
-
-        .comment-deletable {
-            cursor: pointer;
-        }
-
-        .comment-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-            font-size: 12px;
-            color: #6b7280;
-        }
-
-        .comment-head-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .comment-user {
-            font-weight: bold;
-            color: #374151;
-        }
-
-        .comment-delete-form {
-            display: none;
-        }
-
-        .comment-text {
-            margin: 0;
-            color: #1f2937;
-            line-height: 1.4;
-            font-size: 14px;
-        }
-
-        .comment-form {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .comment-form input {
-            flex: 1;
-            padding: 9px 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-        }
-
-        .open-comments-btn {
-            margin-top: 4px;
-        }
-
-        .comments-modal {
-            display: none;
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.55);
-            z-index: 1400;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-            box-sizing: border-box;
-        }
-
-        .comments-modal-content {
-            width: min(94vw, 560px);
-            max-height: 85vh;
-            background: #ffffff;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .comments-modal-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .comments-modal-head h3 {
-            margin: 0;
-            font-size: 18px;
-            color: #111827;
-        }
-
-        .comments-modal-close {
-            border: 0;
-            background: transparent;
-            font-size: 22px;
-            line-height: 1;
-            cursor: pointer;
-            color: #374151;
-        }
-
-        .comments-modal-body {
-            overflow-y: auto;
-            padding-right: 4px;
-        }
-
-        .comments-modal .comment-form {
-            margin-top: 12px;
-            position: sticky;
-            bottom: 0;
-            background: #ffffff;
-            padding-top: 8px;
-        }
-
-        .item-image {
-            width: 100%;
-            max-width: 100%;
-            border-radius: 12px;
-            margin: 8px 0 12px;
-            border: 1px solid #e5e7eb;
-        }
-
-        .fab {
-            position: static;
-            width: auto;
-            height: auto;
-            border-radius: 0;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4px;
-            box-shadow: none;
-            background: transparent;
-            color: #2563eb;
-            text-shadow:
-                -1px -1px 0 #000,
-                 1px -1px 0 #000,
-                -1px  1px 0 #000,
-                 1px  1px 0 #000;
-        }
-
-        .overlay {
-            display: none;
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.55);
-            z-index: 1100;
-        }
-
-        .action-modal {
-            display: none;
-            position: fixed;
-            z-index: 1201;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: min(94vw, 560px);
-            background: #ffffff;
-            border-radius: 10px;
-            border: 1px solid #d1d5db;
-            padding: 18px;
-        }
-
-        .action-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .action-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 14px;
-            background: #f9fafb;
-        }
-
-        .action-card h3 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-
-        .filter-links {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .filter-link {
-            display: inline-block;
-            padding: 8px 12px;
-            border-radius: 8px;
-            text-decoration: none;
-            background: #2563eb;
-            color: #ffffff;
-            font-size: 14px;
-        }
-
-        .active-filter {
-            background: #0f766e;
-        }
-
-        .post-modal {
-            display: none;
-            position: fixed;
-            z-index: 1202;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: min(94vw, 520px);
-            background: #ffffff;
-            border-radius: 10px;
-            border: 1px solid #d1d5db;
-            padding: 18px;
-        }
-
-        .post-modal h2 {
-            margin-top: 0;
-        }
-
-        .post-modal input,
-        .post-modal select {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-            margin-top: 8px;
-        }
-
-        .cancel-btn {
-            background: #6b7280;
-        }
-
-        #imageModal {
-            display: none;
-            position: fixed;
-            z-index: 9999;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
-            justify-content: center;
-            align-items: center;
-            cursor: zoom-out;
-        }
-
-        #modalImage {
-            max-width: 90vw;
-            max-height: 90vh;
-            border: 2px solid white;
-        }
-
-        .clickable-image {
-            cursor: zoom-in;
-        }
-
-        @media (max-width: 640px) {
-            .container {
-                padding: 14px;
-            }
-
-            .items-header {
-                gap: 8px;
-                align-items: center;
-            }
-
-            .items-header h2 {
-                font-size: 22px;
-                line-height: 1.2;
-                min-width: 0;
-            }
-
-            .items-tools {
-                margin-right: 0;
-                gap: 4px;
-                flex-shrink: 0;
-            }
-
-            .inbox-fab,
-            .settings-btn,
-            .fab {
-                min-width: 32px;
-                min-height: 32px;
-                font-size: 20px;
-                padding: 2px;
-            }
-
-            .inbox-badge {
-                top: -5px;
-                right: -5px;
-            }
-
-            .topbar {
-                align-items: flex-start;
-                flex-direction: column;
-                gap: 6px;
-            }
-
-            .topbar h1 {
-                margin: 0;
-                font-size: 24px;
-            }
-
-            .top-actions {
-                width: auto;
-            }
-
-            .title-banner {
-                width: 100%;
-                min-height: 72px;
-            }
-
-            .title-banner h1 {
-                font-size: 24px;
-            }
-
-            .search-form {
-                flex-direction: column;
-            }
-
-            .search-form button {
-                width: 100%;
-            }
-
-            .card {
-                padding: 12px;
-            }
-
-            .post-head {
-                gap: 8px;
-            }
-
-            .item-image {
-                width: 100%;
-                max-width: 100%;
-            }
-
-            .meta-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .action-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .modal-actions {
-                flex-direction: column;
-            }
-
-            .modal-actions button {
-                width: 100%;
-            }
-
-            .comments-modal {
-                padding: 10px;
-            }
-
-            .comments-modal-content {
-                width: 100%;
-                max-height: 90vh;
-                padding: 12px;
-            }
-
-            .comments-modal .comment-form {
-                flex-direction: column;
-            }
-
-            .comments-modal .comment-form button {
-                width: 100%;
-            }
-
-            .settings-menu {
-                right: auto;
-                left: 0;
-            }
+        .support-panel.open {
+            transform: translateX(0);
         }
     </style>
 </head>
-<body>
-    <div class="live-bg" aria-hidden="true"></div>
-    <div class="container">
-        <div class="topbar">
-            <a class="title-banner" href="/">
-                <h1>Campus Lost & Found</h1>
-            </a>
-            <div>
-                {% if session.get('role') == 'admin' %}
-                    <a class="logout-btn" style="background:#0f766e;" href="/admin/dashboard">Admin Dashboard</a>
-                {% endif %}
-            </div>
-        </div>
-
-        <form method="GET" action="/" class="search-form">
-            <input type="text" name="search" value="{{ search_query }}" placeholder="Search by title or description">
-            {% if current_filter != 'All' %}
-                <input type="hidden" name="filter" value="{{ current_filter }}">
-            {% endif %}
-            <button type="submit">Search</button>
-        </form>
-
-        <div class="items-header">
-            <h2>All Items {% if current_filter != 'All' %}({{ current_filter }}){% endif %}</h2>
-            <div class="items-tools">
-                <a class="inbox-fab" href="/inbox" title="Inbox">💬{% if unread_messages_count > 0 %}<span class="inbox-badge">{{ unread_messages_count }}</span>{% endif %}</a>
-
-                <div class="settings-fab-wrap" id="settingsWrap">
-                    <button type="button" class="settings-btn" onclick="toggleSettingsMenu()" title="Settings">⚙️</button>
-                    <div class="settings-menu" id="settingsMenu">
-                        <a class="settings-link" href="/profile">My Profile</a>
-                        <a class="settings-link" href="/contact">Contact Us</a>
-                        <a class="settings-link logout" href="/logout">Logout</a>
-                    </div>
+<body class="h-full bg-slate-50 text-slate-800 transition-all duration-200 dark:bg-slate-950 dark:text-slate-100">
+    <div class="min-h-screen">
+        <header class="app-header sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/85">
+            <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center gap-3">
+                    <button id="mobileMenuButton" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition-all duration-200 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800" aria-label="Open menu">
+                        ☰
+                    </button>
+                    <a href="/" class="text-lg font-semibold tracking-tight">Campus Lost &amp; Found</a>
                 </div>
 
-                <button class="fab" type="button" onclick="openActionModal()" title="Post or Filter">✏️</button>
-            </div>
-        </div>
+                <form method="GET" action="/" class="hidden w-full max-w-xl md:block">
+                    <div class="relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">🔎</span>
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Search by title or description"
+                               class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:focus:bg-slate-800">
+                        {% if current_filter != 'All' %}
+                            <input type="hidden" name="filter" value="{{ current_filter }}">
+                        {% endif %}
+                    </div>
+                </form>
 
-        {% if items %}
-            {% for item in items %}
-                <div class="card">
-                    <div class="post-head">
-                        <div class="post-user">
-                            {% if item[8] %}
-                                <a class="profile-link" href="/users/{{ item[8] }}">
-                                    <div class="avatar">
-                                        {% if item[11] %}
-                                            <img src="{{ url_for('static', filename='profile_photos/' + item[11]) }}" alt="{{ item[9] }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
-                                        {% else %}
-                                            {{ (item[9] or 'U')[0]|upper }}
+                <div class="flex items-center gap-2">
+                    <a class="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition-all duration-200 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800" href="/inbox" title="Messages" aria-label="Open inbox">
+                        💬
+                        {% if unread_messages_count > 0 %}
+                            <span class="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-rose-600 px-1 text-center text-[11px] font-semibold leading-[18px] text-white">{{ unread_messages_count }}</span>
+                        {% endif %}
+                    </a>
+
+                    <button id="darkModeToggle" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition-all duration-200 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800" title="Toggle dark mode">🌙</button>
+
+                    <div class="relative" id="settingsWrap">
+                        <button type="button" onclick="toggleSettingsMenu()" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white font-semibold text-slate-700 transition-all duration-200 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" title="Profile menu">
+                            {{ (session.get('name') or 'U')[0]|upper }}
+                        </button>
+                        <div id="settingsMenu" class="menu-panel absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                            <a class="block rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800" href="/profile">My Profile</a>
+                            <a class="block rounded-xl px-3 py-2 text-sm transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800" href="/contact">Contact Us</a>
+                            {% if session.get('role') == 'admin' %}
+                                <a class="block rounded-xl px-3 py-2 text-sm font-medium text-emerald-700 transition-all duration-200 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30" href="/admin/dashboard">Admin Dashboard</a>
+                            {% endif %}
+                            <a class="block rounded-xl px-3 py-2 text-sm font-semibold text-rose-600 transition-all duration-200 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/30" href="/logout">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 px-4 py-3 md:hidden dark:border-slate-800">
+                <form method="GET" action="/">
+                    <div class="relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">🔎</span>
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Search by title or description"
+                               class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-900 dark:focus:bg-slate-800">
+                        {% if current_filter != 'All' %}
+                            <input type="hidden" name="filter" value="{{ current_filter }}">
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </header>
+
+        <div class="mx-auto flex w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8">
+            <aside class="surface sticky top-24 hidden h-fit w-64 flex-shrink-0 rounded-2xl border border-white/50 p-4 shadow-sm lg:block dark:border-slate-700/60">
+                <nav class="space-y-1 text-sm">
+                    <a href="/" class="block rounded-xl px-3 py-2 font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Home</a>
+                    <a href="/inbox" class="block rounded-xl px-3 py-2 font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Messages</a>
+                    <button type="button" onclick="openSupportPanel()" class="block w-full rounded-xl px-3 py-2 text-left font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Support</button>
+                    <details class="rounded-xl border border-slate-200 bg-white/80 p-2 dark:border-slate-700 dark:bg-slate-900/70">
+                        <summary class="cursor-pointer list-none rounded-lg px-2 py-1 font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Settings</summary>
+                        <div class="pt-2">
+                            <label for="navThemeSelect" class="mb-1 block px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Theme</label>
+                            <select id="navThemeSelect" class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
+                                <option value="" selected disabled>Select theme</option>
+                                <option value="default">Default</option>
+                                <option value="ocean">Ocean</option>
+                                <option value="sunset">Sunset</option>
+                                <option value="forest">Forest</option>
+                                <option value="violet">Violet</option>
+                            </select>
+                        </div>
+                    </details>
+                </nav>
+            </aside>
+
+            <main class="w-full">
+                <div class="mx-auto max-w-4xl">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h2 class="text-2xl font-bold tracking-tight">All Items {% if current_filter != 'All' %}<span class="text-slate-500 dark:text-slate-400">({{ current_filter }})</span>{% endif %}</h2>
+                        <button class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium transition-all duration-200 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800" type="button" onclick="openActionModal()">⚡ Quick Actions</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-1">
+                        {% if items %}
+                            {% for item in items %}
+                                <article class="card-lift relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 dark:border-slate-800 dark:bg-slate-900">
+                                    <span class="absolute right-5 top-5 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-white {% if item[5] == 'Found' %}bg-emerald-600{% else %}bg-rose-600{% endif %}">{{ item[5] }}</span>
+
+                                    <div class="mb-4 flex items-start gap-3 pr-24">
+                                        <div class="h-11 w-11 overflow-hidden rounded-full border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+                                            {% if item[11] %}
+                                                <img src="{{ url_for('static', filename='profile_photos/' + item[11]) }}" alt="{{ item[9] }}" class="h-full w-full object-cover">
+                                            {% else %}
+                                                <div class="flex h-full w-full items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300">{{ (item[9] or 'U')[0]|upper }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            {% if item[8] %}
+                                                <a class="block truncate text-sm font-semibold text-slate-800 transition-all duration-200 hover:text-blue-600 dark:text-slate-100" href="/users/{{ item[8] }}">{{ item[9] }}</a>
+                                            {% else %}
+                                                <p class="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{{ item[9] }}</p>
+                                            {% endif %}
+                                            <p class="text-xs text-slate-500 dark:text-slate-400">{{ item[3] }} • {{ item[4] }}</p>
+                                        </div>
+
+                                        {% if session.get('role') == 'admin' or session.get('user_id') == item[8] %}
+                                            <div class="relative ml-auto" data-post-menu-wrap>
+                                                <button type="button" class="rounded-lg px-2 py-1 text-slate-500 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="togglePostMenu({{ item[0] }})" title="Post menu">⋯</button>
+                                                <div class="post-menu-dropdown absolute right-0 z-20 mt-2 w-44 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900" id="postMenu-{{ item[0] }}">
+                                                    <a href="/edit/{{ item[0] }}" class="block rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800">Edit Post</a>
+                                                    <form method="POST" action="/delete/{{ item[0] }}" onsubmit="return confirm('Delete this post?');">
+                                                        <button type="submit" class="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-rose-600 transition-all duration-200 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/30">Delete Post</button>
+                                                    </form>
+                                                </div>
+                                            </div>
                                         {% endif %}
                                     </div>
-                                </a>
-                                <a class="profile-link name-wrap" href="/users/{{ item[8] }}">
-                                    <div class="student-name">{{ item[9] }}</div>
-                                    <div class="post-date">{{ item[4] }}</div>
-                                </a>
-                            {% else %}
-                                <div class="avatar">
-                                    {% if item[11] %}
-                                        <img src="{{ url_for('static', filename='profile_photos/' + item[11]) }}" alt="{{ item[9] }}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
-                                    {% else %}
-                                        {{ (item[9] or 'U')[0]|upper }}
+
+                                    <h3 class="mb-2 text-xl font-bold tracking-tight">{{ item[1] }}</h3>
+                                    <p class="mb-3 text-sm text-slate-600 dark:text-slate-300">{{ item[2] }}</p>
+
+                                    {% if item[7] %}
+                                        <img src="{{ item[7] }}" class="clickable-image mb-4 h-auto w-full rounded-xl border border-slate-200 object-cover transition-all duration-200 hover:opacity-95 dark:border-slate-700" onclick="openImageModal(this.src)">
                                     {% endif %}
-                                </div>
-                                <div class="name-wrap">
-                                    <div class="student-name">{{ item[9] }}</div>
-                                    <div class="post-date">{{ item[4] }}</div>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <span class="type-badge {% if item[5] == 'Found' %}found{% endif %}">{{ item[5] }}</span>
-                        {% if session.get('role') == 'admin' or session.get('user_id') == item[8] %}
-                            <div class="post-menu-wrap" data-post-menu-wrap>
-                                <button type="button" class="post-menu-btn" onclick="togglePostMenu({{ item[0] }})" title="Post Menu">...</button>
-                                <div class="post-menu-dropdown" id="postMenu-{{ item[0] }}">
-                                    <a href="/edit/{{ item[0] }}" class="post-menu-item">Edit Post</a>
-                                    <form method="POST" action="/delete/{{ item[0] }}" onsubmit="return confirm('Delete this post?');">
-                                        <button type="submit" class="post-menu-item delete">Delete Post</button>
-                                    </form>
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div>
 
-                    <h3 class="post-title">{{ item[1] }}</h3>
+                                    <div class="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800/70">
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400">Status</span>
+                                            <span class="font-semibold {% if item[6] == 'Claimed' %}text-emerald-600 dark:text-emerald-400{% else %}text-amber-600 dark:text-amber-400{% endif %}">{{ item[6] }}</span>
+                                        </div>
+                                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800/70">
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400">Seen By</span>
+                                            <span class="font-semibold">{{ post_view_counts.get(item[0], 0) }} people</span>
+                                        </div>
+                                        {% if item[5] == 'Lost' %}
+                                            <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm sm:col-span-2 dark:border-slate-700 dark:bg-slate-800/70">
+                                                <span class="block text-xs text-slate-500 dark:text-slate-400">Bounty Amount</span>
+                                                <span class="font-semibold">
+                                                    {% if item[10] is not none %}
+                                                        Rs {{ '%.2f'|format(item[10]) }}
+                                                    {% else %}
+                                                        Not set
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
 
-                    {% if item[7] %}
-                        <img src="{{ url_for('static', filename='uploads/' + item[7]) }}" class="item-image clickable-image" onclick="openImageModal(this.src)"><br>
-                    {% endif %}
+                                    <div class="mb-3 flex flex-wrap items-center gap-2">
+                                        {% if item[6] != 'Claimed' and (session.get('role') == 'admin' or session.get('user_id') == item[8]) %}
+                                            <form method="POST" action="/claim/{{ item[0] }}">
+                                                <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700">Mark as Claimed</button>
+                                            </form>
+                                        {% endif %}
 
-                    <p class="post-text">{{ item[2] }}</p>
+                                        {% if item[8] and session.get('user_id') != item[8] %}
+                                            <a href="/chat/{{ item[8] }}?item_id={{ item[0] }}" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">Message Owner</a>
+                                        {% endif %}
+                                    </div>
 
-                    <div class="meta-grid">
-                        <div class="meta-chip">
-                            <span class="meta-label">Location</span>
-                            {{ item[3] }}
-                        </div>
-                        <div class="meta-chip">
-                            <span class="meta-label">Status</span>
-                            <span class="{% if item[6] == 'Claimed' %}status-claimed{% else %}status-open{% endif %}">{{ item[6] }}</span>
-                        </div>
-                        <div class="meta-chip seen-by-chip">
-                            <span class="meta-label">Seen By</span>
-                            {{ post_view_counts.get(item[0], 0) }} people
-                        </div>
-                        {% if item[5] == 'Lost' %}
-                            <div class="meta-chip bounty-chip">
-                                <span class="meta-label">Bounty Amount</span>
-                                {% if item[10] is not none %}
-                                    Rs {{ '%.2f'|format(item[10]) }}
-                                {% else %}
-                                    Not set
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                    </div>
+                                    <div class="border-t border-slate-200 pt-3 dark:border-slate-800">
+                                        {% set post_comments = comments_by_item_id.get(item[0], []) %}
+                                        <button type="button" class="rounded-lg px-2 py-1 text-sm font-medium text-blue-600 transition-all duration-200 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30" onclick="openCommentsModal({{ item[0] }})">Comments ({{ post_comments|length }})</button>
+                                    </div>
 
-                    {% if item[6] != 'Claimed' and (session.get('role') == 'admin' or session.get('user_id') == item[8]) %}
-                        <form method="POST" action="/claim/{{ item[0] }}">
-                            <button type="submit" class="claim-btn">Mark as Claimed</button>
-                        </form>
-                    {% endif %}
-
-                    {% if item[8] and session.get('user_id') != item[8] %}
-                        <a href="/chat/{{ item[8] }}?item_id={{ item[0] }}" class="message-btn">Message Owner</a>
-                    {% endif %}
-
-                    <div class="comments-section">
-                        {% set post_comments = comments_by_item_id.get(item[0], []) %}
-                        <button type="button" class="open-comments-btn" onclick="openCommentsModal({{ item[0] }})">Comments ({{ post_comments|length }})</button>
-                    </div>
-
-                    <div id="commentsModal-{{ item[0] }}" class="comments-modal" onclick="closeCommentsModal({{ item[0] }})">
-                        <div class="comments-modal-content" onclick="event.stopPropagation()">
-                            <div class="comments-modal-head">
-                                <h3>Comments</h3>
-                                <button type="button" class="comments-modal-close" onclick="closeCommentsModal({{ item[0] }})" aria-label="Close comments">×</button>
-                            </div>
-                            <div class="comments-modal-body">
-                                {% if post_comments %}
-                                    <ul class="comment-list">
-                                        {% for comment in post_comments %}
-                                            {% set can_delete_comment = session.get('role') == 'admin' or (session.get('user_id')|string) == (comment[4]|string) %}
-                                            <li class="comment-item{% if can_delete_comment %} comment-deletable{% endif %}"{% if can_delete_comment %} data-delete-form-id="delete-comment-{{ comment[1] }}" title="Double tap to delete"{% endif %}>
-                                                <div class="comment-head">
-                                                    <span class="comment-user">{{ comment[5] }}</span>
-                                                    <div class="comment-head-right">
-                                                        <span>{{ comment[3] }}</span>
-                                                    </div>
-                                                </div>
-                                                <p class="comment-text">{{ comment[2] }}</p>
-                                                {% if can_delete_comment %}
-                                                    <form id="delete-comment-{{ comment[1] }}" method="POST" action="/comment/delete/{{ comment[1] }}" class="comment-delete-form"></form>
+                                    <div id="commentsModal-{{ item[0] }}" class="comments-modal fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 p-4" onclick="closeCommentsModal({{ item[0] }})">
+                                        <div class="base-modal comments-modal-card w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-900" onclick="event.stopPropagation()">
+                                            <div class="mb-3 flex items-center justify-between">
+                                                <h3 class="text-lg font-semibold">Comments</h3>
+                                                <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="closeCommentsModal({{ item[0] }})" aria-label="Close comments">✕</button>
+                                            </div>
+                                            <div class="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
+                                                {% if post_comments %}
+                                                    <ul class="space-y-2">
+                                                        {% for comment in post_comments %}
+                                                            {% set can_delete_comment = session.get('role') == 'admin' or (session.get('user_id')|string) == (comment[4]|string) %}
+                                                            <li class="comment-item rounded-xl border border-slate-200 bg-slate-50 p-3{% if can_delete_comment %} comment-deletable cursor-pointer{% endif %} dark:border-slate-700 dark:bg-slate-800"{% if can_delete_comment %} data-delete-form-id="delete-comment-{{ comment[1] }}" title="Double tap to delete"{% endif %}>
+                                                                <div class="mb-1 flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                                                                    <span class="font-semibold text-slate-700 dark:text-slate-200">{{ comment[5] }}</span>
+                                                                    <span>{{ comment[3] }}</span>
+                                                                </div>
+                                                                <p class="text-sm text-slate-700 dark:text-slate-200">{{ comment[2] }}</p>
+                                                                {% if can_delete_comment %}
+                                                                    <form id="delete-comment-{{ comment[1] }}" method="POST" action="/comment/delete/{{ comment[1] }}" class="hidden"></form>
+                                                                {% endif %}
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% else %}
+                                                    <p class="text-sm text-slate-500 dark:text-slate-400">No comments yet.</p>
                                                 {% endif %}
-                                            </li>
-                                        {% endfor %}
-                                    </ul>
-                                {% else %}
-                                    <p class="comment-text">No comments yet.</p>
-                                {% endif %}
+                                            </div>
 
-                                <form method="POST" action="/comment/{{ item[0] }}" class="comment-form">
-                                    <input type="text" name="comment_text" placeholder="Write a comment..." required>
-                                    <button type="submit">Comment</button>
-                                </form>
-                            </div>
-                        </div>
+                                            <form method="POST" action="/comment/{{ item[0] }}" class="mt-4 flex flex-col gap-2 sm:flex-row">
+                                                <input type="text" name="comment_text" placeholder="Write a comment..." required class="h-10 flex-1 rounded-xl border border-slate-300 px-3 text-sm outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-800">
+                                                <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700">Comment</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        {% else %}
+                            <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">No items posted yet.</div>
+                        {% endif %}
                     </div>
-
                 </div>
-            {% endfor %}
-        {% else %}
-            <div class="card">No items posted yet.</div>
-        {% endif %}
-    </div>
-
-    <div id="mainOverlay" class="overlay" onclick="closeAllModals()"></div>
-
-    <div id="actionModal" class="action-modal">
-        <h2>Quick Actions</h2>
-        <div class="action-grid">
-            <div class="action-card">
-                <h3>Post an Item</h3>
-                <button type="button" onclick="openPostFromAction()">Open Post Form</button>
-            </div>
-            <div class="action-card">
-                <h3>Filter</h3>
-                <div class="filter-links">
-                    <a class="filter-link {% if current_filter == 'All' %}active-filter{% endif %}" href="{{ url_for('home', search=search_query) }}">All</a>
-                    <a class="filter-link {% if current_filter == 'Lost' %}active-filter{% endif %}" href="{{ url_for('home', filter='Lost', search=search_query) }}">Lost</a>
-                    <a class="filter-link {% if current_filter == 'Found' %}active-filter{% endif %}" href="{{ url_for('home', filter='Found', search=search_query) }}">Found</a>
-                    <a class="filter-link {% if current_filter == 'Claimed' %}active-filter{% endif %}" href="{{ url_for('home', filter='Claimed', search=search_query) }}">Claimed</a>
-                </div>
-            </div>
-        </div>
-        <div class="modal-actions">
-            <button type="button" class="cancel-btn" onclick="closeActionModal()">Close</button>
+            </main>
         </div>
     </div>
 
-    <div id="postModal" class="post-modal">
-        <h2>Post an Item</h2>
-        <form method="POST" action="/add" enctype="multipart/form-data">
-            <label>Title:</label>
-            <input type="text" name="title" required>
-
-            <label>Description:</label>
-            <input type="text" name="description" required>
-
-            <label>Upload Image:</label>
-            <input type="file" name="image">
-
-            <label>Location:</label>
-            <input type="text" name="location" required>
-
-            <label>Date:</label>
-            <input type="date" name="date" required>
-
-            <label>Type:</label>
-            <select id="postType" name="type" onchange="toggleBountyField()">
-                <option value="Lost">Lost</option>
-                <option value="Found">Found</option>
-            </select>
-
-            <div id="bountyFieldWrap">
-                <label>Bounty Amount (optional, for Lost only):</label>
-                <input type="number" name="bounty_amount" min="0" step="0.01" placeholder="e.g. 500">
+    <div id="mobileSidebar" class="fixed inset-0 z-50 hidden bg-slate-950/50 lg:hidden">
+        <div class="surface h-full w-72 border-r border-white/40 p-4 dark:border-slate-700/60">
+            <div class="mb-4 flex items-center justify-between">
+                <p class="text-sm font-semibold">Navigation</p>
+                <button type="button" id="closeMobileMenu" class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800">✕</button>
             </div>
-
-            <div class="modal-actions">
-                <button type="button" class="cancel-btn" onclick="closePostModal()">Cancel</button>
-                <button type="submit">Submit</button>
-            </div>
-        </form>
+            <nav class="space-y-1 text-sm">
+                <a href="/" class="block rounded-xl px-3 py-2 font-medium transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800">Home</a>
+                <a href="/inbox" class="block rounded-xl px-3 py-2 font-medium transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800">Messages</a>
+                <button type="button" onclick="openSupportPanel()" class="block w-full rounded-xl px-3 py-2 text-left font-medium transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800">Support</button>
+                <details class="rounded-xl border border-slate-200 bg-white/80 p-2 dark:border-slate-700 dark:bg-slate-900/70">
+                    <summary class="cursor-pointer list-none rounded-lg px-2 py-1 font-medium transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800">Settings</summary>
+                    <div class="pt-2">
+                        <label for="mobileNavThemeSelect" class="mb-1 block px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Theme</label>
+                        <select id="mobileNavThemeSelect" class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
+                            <option value="" selected disabled>Select theme</option>
+                            <option value="default">Default</option>
+                            <option value="ocean">Ocean</option>
+                            <option value="sunset">Sunset</option>
+                            <option value="forest">Forest</option>
+                            <option value="violet">Violet</option>
+                        </select>
+                    </div>
+                </details>
+            </nav>
+        </div>
     </div>
 
-<div id="imageModal" onclick="closeImageModal()">
-    <img id="modalImage" src="" alt="Zoomed item image">
-</div>
+    <div id="mainOverlay" class="fixed inset-0 z-40 hidden bg-slate-950/55"></div>
 
-<script>
-    function toggleSettingsMenu() {
-        const menu = document.getElementById('settingsMenu');
-        menu.classList.toggle('open');
-    }
+    <div id="actionModal" class="base-modal fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-xl font-semibold">Quick Actions</h2>
+                <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="closeActionModal()">✕</button>
+            </div>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
+                    <h3 class="mb-2 text-base font-semibold">Post an Item</h3>
+                    <button type="button" onclick="openPostFromAction()" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700">Open Post Form</button>
+                </div>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
+                    <h3 class="mb-2 text-base font-semibold">Filter</h3>
+                    <div class="flex flex-wrap gap-2 text-sm">
+                        <a class="rounded-lg px-3 py-1.5 transition-all duration-200 {% if current_filter == 'All' %}bg-emerald-600 text-white{% else %}border border-slate-300 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700{% endif %}" href="{{ url_for('home', search=search_query) }}">All</a>
+                        <a class="rounded-lg px-3 py-1.5 transition-all duration-200 {% if current_filter == 'Lost' %}bg-emerald-600 text-white{% else %}border border-slate-300 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700{% endif %}" href="{{ url_for('home', filter='Lost', search=search_query) }}">Lost</a>
+                        <a class="rounded-lg px-3 py-1.5 transition-all duration-200 {% if current_filter == 'Found' %}bg-emerald-600 text-white{% else %}border border-slate-300 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700{% endif %}" href="{{ url_for('home', filter='Found', search=search_query) }}">Found</a>
+                        <a class="rounded-lg px-3 py-1.5 transition-all duration-200 {% if current_filter == 'Claimed' %}bg-emerald-600 text-white{% else %}border border-slate-300 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700{% endif %}" href="{{ url_for('home', filter='Claimed', search=search_query) }}">Claimed</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    function closeSettingsMenu() {
-        const menu = document.getElementById('settingsMenu');
-        if (menu) {
-            menu.classList.remove('open');
+    <div id="postModal" class="base-modal fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-xl font-semibold">Post an Item</h2>
+                <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="closePostModal()">✕</button>
+            </div>
+            <form method="POST" action="/add" enctype="multipart/form-data" class="space-y-3">
+                <div>
+                    <label class="mb-1 block text-sm font-medium">Title</label>
+                    <input type="text" name="title" required class="h-10 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-800">
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">Description</label>
+                    <input type="text" name="description" required class="h-10 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-800">
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">Upload Image</label>
+                    <input type="file" name="image" class="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-slate-200 file:px-3 file:py-2 file:text-sm file:font-medium dark:file:bg-slate-700">
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">Location</label>
+                    <input type="text" name="location" required class="h-10 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-800">
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">Date</label>
+                    <input type="date" name="date" required class="h-10 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-800">
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-sm font-medium">Type</label>
+                    <select id="postType" name="type" onchange="toggleBountyField()" class="h-10 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-800">
+                        <option value="Lost">Lost</option>
+                        <option value="Found">Found</option>
+                    </select>
+                </div>
+
+                <div id="bountyFieldWrap">
+                    <label class="mb-1 block text-sm font-medium">Bounty Amount (optional, for Lost only)</label>
+                    <input type="number" name="bounty_amount" min="0" step="0.01" placeholder="e.g. 500" class="h-10 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-800">
+                </div>
+
+                <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
+                    <button type="button" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold transition-all duration-200 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800" onclick="closePostModal()">Cancel</button>
+                    <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="imageModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-950/80 p-4" onclick="closeImageModal()">
+        <img id="modalImage" src="" alt="Zoomed item image" class="base-modal max-h-[90vh] max-w-[92vw] rounded-2xl border border-white/20 shadow-2xl">
+    </div>
+
+    <button type="button" onclick="toggleSupportPanel()" class="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:bg-blue-700">
+        ❔ Help
+    </button>
+
+    <aside id="supportPanel" class="support-panel fixed right-0 top-0 z-[70] h-full w-full max-w-md border-l border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+        <div class="mb-5 flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Support</h3>
+            <button type="button" onclick="closeSupportPanel()" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800">✕</button>
+        </div>
+
+        <div class="space-y-3">
+            <details class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                <summary class="cursor-pointer text-sm font-medium">How do I post a lost item?</summary>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Use the Post Item button, fill all required fields, and submit. Your post appears immediately in the feed.</p>
+            </details>
+            <details class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                <summary class="cursor-pointer text-sm font-medium">How can I contact an item owner?</summary>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Open any card and click Message Owner to start a direct conversation.</p>
+            </details>
+            <details class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                <summary class="cursor-pointer text-sm font-medium">How do I mark an item claimed?</summary>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Owners and admins can click Mark as Claimed from the item card when the item is recovered.</p>
+            </details>
+        </div>
+
+        <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+            <div class="mb-2 flex items-center justify-between gap-2">
+                <p class="text-sm font-semibold">AI Help Assistant</p>
+                <span class="text-xs text-slate-500 dark:text-slate-400">App related Q&amp;A</span>
+            </div>
+            <div id="aiHelpMessages" class="max-h-52 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 text-sm dark:border-slate-700 dark:bg-slate-900">
+                <div class="rounded-lg bg-blue-50 px-2 py-1.5 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Hi! Ask me anything about this web app.</div>
+            </div>
+            <form id="aiHelpForm" class="mt-2 flex gap-2">
+                <input id="aiHelpInput" type="text" placeholder="Ask a question about this app..." class="h-10 flex-1 rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-900">
+                <button id="aiHelpSendBtn" type="submit" class="rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700">Ask</button>
+            </form>
+        </div>
+
+        <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-700 dark:bg-slate-800/70">
+            <p class="font-medium">Contact Email</p>
+            <a href="mailto:sakif725@gmail.com" class="mt-1 inline-block text-blue-600 hover:underline dark:text-blue-400">sakif725@gmail.com</a>
+            <button type="button" class="mt-4 w-full rounded-xl border border-slate-300 px-4 py-2 font-semibold transition-all duration-200 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-700">Report Issue</button>
+        </div>
+    </aside>
+
+    <script>
+        function toggleSettingsMenu() {
+            const menu = document.getElementById('settingsMenu');
+            if (menu) {
+                menu.classList.toggle('open');
+            }
         }
-    }
 
-    function closePostMenus() {
-        document.querySelectorAll('.post-menu-dropdown').forEach(function (menu) {
-            menu.classList.remove('open');
-        });
-    }
-
-    function togglePostMenu(itemId) {
-        const menu = document.getElementById('postMenu-' + itemId);
-        if (!menu) {
-            return;
+        function closeSettingsMenu() {
+            const menu = document.getElementById('settingsMenu');
+            if (menu) {
+                menu.classList.remove('open');
+            }
         }
 
-        const wasOpen = menu.classList.contains('open');
-        closePostMenus();
-        if (!wasOpen) {
-            closeSettingsMenu();
-            menu.classList.add('open');
+        function closePostMenus() {
+            document.querySelectorAll('.post-menu-dropdown').forEach(function (menu) {
+                menu.classList.remove('open');
+            });
         }
-    }
 
-    function openActionModal() {
-        closeSettingsMenu();
-        closePostMenus();
-        document.getElementById('mainOverlay').style.display = 'block';
-        document.getElementById('actionModal').style.display = 'block';
-    }
-
-    function closeActionModal() {
-        document.getElementById('actionModal').style.display = 'none';
-        if (document.getElementById('postModal').style.display !== 'block') {
-            document.getElementById('mainOverlay').style.display = 'none';
-        }
-    }
-
-    function openPostFromAction() {
-        closeActionModal();
-        openPostModal();
-    }
-
-    function openPostModal() {
-        closeSettingsMenu();
-        closePostMenus();
-        document.getElementById('mainOverlay').style.display = 'block';
-        document.getElementById('postModal').style.display = 'block';
-    }
-
-    function closePostModal() {
-        document.getElementById('mainOverlay').style.display = 'none';
-        document.getElementById('postModal').style.display = 'none';
-    }
-
-    function toggleBountyField() {
-        const postType = document.getElementById('postType');
-        const bountyWrap = document.getElementById('bountyFieldWrap');
-        if (!postType || !bountyWrap) {
-            return;
-        }
-        bountyWrap.style.display = postType.value === 'Lost' ? 'block' : 'none';
-    }
-
-    function closeAllModals() {
-        document.getElementById('mainOverlay').style.display = 'none';
-        document.getElementById('actionModal').style.display = 'none';
-        document.getElementById('postModal').style.display = 'none';
-        document.querySelectorAll('.comments-modal').forEach(function (modal) {
-            modal.style.display = 'none';
-        });
-    }
-
-    function openCommentsModal(itemId) {
-        closeSettingsMenu();
-        closePostMenus();
-        const commentsModal = document.getElementById('commentsModal-' + itemId);
-        if (commentsModal) {
-            commentsModal.style.display = 'flex';
-        }
-    }
-
-    function closeCommentsModal(itemId) {
-        const commentsModal = document.getElementById('commentsModal-' + itemId);
-        if (commentsModal) {
-            commentsModal.style.display = 'none';
-        }
-    }
-
-    function openImageModal(imageSrc) {
-        document.getElementById('modalImage').src = imageSrc;
-        document.getElementById('imageModal').style.display = 'flex';
-    }
-
-    function closeImageModal() {
-        document.getElementById('imageModal').style.display = 'none';
-    }
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-            if (document.getElementById('imageModal').style.display === 'flex') {
-                closeImageModal();
+        function togglePostMenu(itemId) {
+            const menu = document.getElementById('postMenu-' + itemId);
+            if (!menu) {
                 return;
             }
+
+            const wasOpen = menu.classList.contains('open');
+            closePostMenus();
+            if (!wasOpen) {
+                closeSettingsMenu();
+                menu.classList.add('open');
+            }
+        }
+
+        function showMainOverlay(show) {
+            const overlay = document.getElementById('mainOverlay');
+            if (!overlay) {
+                return;
+            }
+            overlay.classList.toggle('hidden', !show);
+        }
+
+        function refreshScrollLock() {
+            const anyCommentsOpen = Array.from(document.querySelectorAll('.comments-modal')).some(function (modal) {
+                return !modal.classList.contains('hidden');
+            });
+
+            const isLocked =
+                !document.getElementById('actionModal').classList.contains('hidden') ||
+                !document.getElementById('postModal').classList.contains('hidden') ||
+                !document.getElementById('imageModal').classList.contains('hidden') ||
+                !document.getElementById('mobileSidebar').classList.contains('hidden') ||
+                document.getElementById('supportPanel').classList.contains('open') ||
+                anyCommentsOpen;
+
+            if (isLocked) {
+                document.body.classList.add('overflow-hidden');
+            } else {
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        function openActionModal() {
             closeSettingsMenu();
             closePostMenus();
-            closeAllModals();
+            showMainOverlay(true);
+            const modal = document.getElementById('actionModal');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(function () {
+                modal.classList.add('open');
+            });
+            refreshScrollLock();
         }
-    });
 
-    document.addEventListener('click', function (event) {
-        const settingsWrap = document.getElementById('settingsWrap');
-        if (settingsWrap && !settingsWrap.contains(event.target)) {
-            closeSettingsMenu();
-        }
-
-        const postMenuWrap = event.target.closest('[data-post-menu-wrap]');
-        if (!postMenuWrap) {
-            closePostMenus();
-        }
-    });
-
-    function initializeCommentDoubleTapDelete() {
-        const doubleTapDelayMs = 350;
-        const deletableComments = document.querySelectorAll('.comment-deletable');
-
-        deletableComments.forEach(function (commentElement) {
-            let lastTouchEnd = 0;
-
-            function requestDelete() {
-                const formId = commentElement.getAttribute('data-delete-form-id');
-                const deleteForm = formId ? document.getElementById(formId) : null;
-
-                if (deleteForm && confirm('Delete this comment?')) {
-                    deleteForm.submit();
+        function closeActionModal() {
+            const modal = document.getElementById('actionModal');
+            modal.classList.remove('open');
+            setTimeout(function () {
+                modal.classList.add('hidden');
+                if (document.getElementById('postModal').classList.contains('hidden')) {
+                    showMainOverlay(false);
                 }
+                refreshScrollLock();
+            }, 200);
+        }
+
+        function openPostFromAction() {
+            closeActionModal();
+            setTimeout(openPostModal, 180);
+        }
+
+        function openPostModal() {
+            closeSettingsMenu();
+            closePostMenus();
+            showMainOverlay(true);
+            const modal = document.getElementById('postModal');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(function () {
+                modal.classList.add('open');
+            });
+            refreshScrollLock();
+        }
+
+        function closePostModal() {
+            const modal = document.getElementById('postModal');
+            modal.classList.remove('open');
+            setTimeout(function () {
+                modal.classList.add('hidden');
+                showMainOverlay(false);
+                refreshScrollLock();
+            }, 200);
+        }
+
+        function toggleBountyField() {
+            const postType = document.getElementById('postType');
+            const bountyWrap = document.getElementById('bountyFieldWrap');
+            if (!postType || !bountyWrap) {
+                return;
+            }
+            bountyWrap.style.display = postType.value === 'Lost' ? 'block' : 'none';
+        }
+
+        function closeAllModals() {
+            closeActionModal();
+            closePostModal();
+            closeSupportPanel();
+            document.querySelectorAll('.comments-modal').forEach(function (modal) {
+                modal.classList.add('hidden');
+                const card = modal.querySelector('.comments-modal-card');
+                if (card) {
+                    card.classList.remove('open');
+                }
+            });
+            const imageModal = document.getElementById('imageModal');
+            imageModal.classList.add('hidden');
+            document.getElementById('modalImage').classList.remove('open');
+            showMainOverlay(false);
+            refreshScrollLock();
+        }
+
+        function openCommentsModal(itemId) {
+            closeSettingsMenu();
+            closePostMenus();
+            const commentsModal = document.getElementById('commentsModal-' + itemId);
+            if (commentsModal) {
+                commentsModal.classList.remove('hidden');
+                const card = commentsModal.querySelector('.comments-modal-card');
+                if (card) {
+                    requestAnimationFrame(function () {
+                        card.classList.add('open');
+                    });
+                }
+                refreshScrollLock();
+            }
+        }
+
+        function closeCommentsModal(itemId) {
+            const commentsModal = document.getElementById('commentsModal-' + itemId);
+            if (commentsModal) {
+                const card = commentsModal.querySelector('.comments-modal-card');
+                if (card) {
+                    card.classList.remove('open');
+                }
+                setTimeout(function () {
+                    commentsModal.classList.add('hidden');
+                    refreshScrollLock();
+                }, 200);
+            }
+        }
+
+        function openImageModal(imageSrc) {
+            const imageModal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = imageSrc;
+            modalImage.classList.remove('open');
+            imageModal.classList.remove('hidden');
+            requestAnimationFrame(function () {
+                modalImage.classList.add('open');
+            });
+            refreshScrollLock();
+        }
+
+        function closeImageModal() {
+            const imageModal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.classList.remove('open');
+            setTimeout(function () {
+                imageModal.classList.add('hidden');
+                refreshScrollLock();
+            }, 200);
+        }
+
+        function toggleSupportPanel() {
+            const panel = document.getElementById('supportPanel');
+            const isOpen = panel.classList.contains('open');
+            panel.classList.toggle('open', !isOpen);
+            refreshScrollLock();
+        }
+
+        function openSupportPanel() {
+            document.getElementById('supportPanel').classList.add('open');
+            refreshScrollLock();
+        }
+
+        function closeSupportPanel() {
+            document.getElementById('supportPanel').classList.remove('open');
+            refreshScrollLock();
+        }
+
+        function initializeCommentDoubleTapDelete() {
+            const doubleTapDelayMs = 350;
+            const deletableComments = document.querySelectorAll('.comment-deletable');
+
+            deletableComments.forEach(function (commentElement) {
+                let lastTouchEnd = 0;
+
+                function requestDelete() {
+                    const formId = commentElement.getAttribute('data-delete-form-id');
+                    const deleteForm = formId ? document.getElementById(formId) : null;
+
+                    if (deleteForm && confirm('Delete this comment?')) {
+                        deleteForm.submit();
+                    }
+                }
+
+                function handleTouchEnd() {
+                    const now = Date.now();
+                    if (now - lastTouchEnd <= doubleTapDelayMs) {
+                        requestDelete();
+                        lastTouchEnd = 0;
+                        return;
+                    }
+                    lastTouchEnd = now;
+                }
+
+                commentElement.addEventListener('dblclick', requestDelete);
+                commentElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+            });
+        }
+
+        function initializeAiHelpAssistant() {
+            const aiHelpForm = document.getElementById('aiHelpForm');
+            const aiHelpInput = document.getElementById('aiHelpInput');
+            const aiHelpMessages = document.getElementById('aiHelpMessages');
+            const aiHelpSendBtn = document.getElementById('aiHelpSendBtn');
+
+            if (!aiHelpForm || !aiHelpInput || !aiHelpMessages || !aiHelpSendBtn) {
+                return;
             }
 
-            function handleTouchEnd() {
-                const now = Date.now();
-                if (now - lastTouchEnd <= doubleTapDelayMs) {
-                    requestDelete();
-                    lastTouchEnd = 0;
+            function appendAiMessage(text, type) {
+                const bubble = document.createElement('div');
+                bubble.className = type === 'user'
+                    ? 'ml-auto max-w-[90%] rounded-lg bg-slate-900 px-2 py-1.5 text-white dark:bg-slate-700'
+                    : 'max-w-[90%] rounded-lg bg-blue-50 px-2 py-1.5 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+                bubble.textContent = text;
+                aiHelpMessages.appendChild(bubble);
+                aiHelpMessages.scrollTop = aiHelpMessages.scrollHeight;
+            }
+
+            aiHelpForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const question = aiHelpInput.value.trim();
+                if (!question) {
                     return;
                 }
-                lastTouchEnd = now;
+
+                appendAiMessage(question, 'user');
+                aiHelpInput.value = '';
+                aiHelpSendBtn.disabled = true;
+                aiHelpSendBtn.textContent = '...';
+
+                try {
+                    const response = await fetch('/support/ai', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ question: question })
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok || !data.ok) {
+                        appendAiMessage('I could not answer right now. Please try again.', 'assistant');
+                        return;
+                    }
+
+                    appendAiMessage(data.answer || 'I could not find an answer.', 'assistant');
+                } catch (error) {
+                    appendAiMessage('Network issue. Please try again.', 'assistant');
+                } finally {
+                    aiHelpSendBtn.disabled = false;
+                    aiHelpSendBtn.textContent = 'Ask';
+                    aiHelpInput.focus();
+                }
+            });
+        }
+
+        function initializeDarkMode() {
+            const root = document.documentElement;
+            const toggle = document.getElementById('darkModeToggle');
+            const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+            root.classList.toggle('dark', savedDarkMode);
+            toggle.textContent = savedDarkMode ? '☀️' : '🌙';
+
+            toggle.addEventListener('click', function () {
+                const willBeDark = !root.classList.contains('dark');
+                root.classList.toggle('dark', willBeDark);
+                localStorage.setItem('darkMode', willBeDark ? 'true' : 'false');
+                toggle.textContent = willBeDark ? '☀️' : '🌙';
+            });
+        }
+
+        function initializeMobileSidebar() {
+            const mobileMenuButton = document.getElementById('mobileMenuButton');
+            const closeButton = document.getElementById('closeMobileMenu');
+            const mobileSidebar = document.getElementById('mobileSidebar');
+
+            mobileMenuButton.addEventListener('click', function () {
+                mobileSidebar.classList.remove('hidden');
+                refreshScrollLock();
+            });
+
+            closeButton.addEventListener('click', function () {
+                mobileSidebar.classList.add('hidden');
+                refreshScrollLock();
+            });
+
+            mobileSidebar.addEventListener('click', function (event) {
+                if (event.target === mobileSidebar) {
+                    mobileSidebar.classList.add('hidden');
+                    refreshScrollLock();
+                }
+            });
+        }
+
+        function initializeThemeSelector() {
+            const root = document.documentElement;
+            const desktopThemeSelect = document.getElementById('navThemeSelect');
+            const mobileThemeSelect = document.getElementById('mobileNavThemeSelect');
+            const validThemes = ['default', 'ocean', 'sunset', 'forest', 'violet'];
+            const savedTheme = localStorage.getItem('siteTheme');
+            const hasSavedTheme = validThemes.includes(savedTheme);
+
+            function applyTheme(themeName) {
+                if (themeName === 'default') {
+                    root.removeAttribute('data-theme');
+                } else {
+                    root.setAttribute('data-theme', themeName);
+                }
+                localStorage.setItem('siteTheme', themeName);
+
+                if (desktopThemeSelect && desktopThemeSelect.value !== themeName) {
+                    desktopThemeSelect.value = themeName;
+                }
+
+                if (mobileThemeSelect && mobileThemeSelect.value !== themeName) {
+                    mobileThemeSelect.value = themeName;
+                }
             }
 
-            commentElement.addEventListener('dblclick', requestDelete);
-            commentElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+            if (hasSavedTheme) {
+                applyTheme(savedTheme);
+            } else {
+                root.removeAttribute('data-theme');
+                if (desktopThemeSelect) {
+                    desktopThemeSelect.value = '';
+                }
+                if (mobileThemeSelect) {
+                    mobileThemeSelect.value = '';
+                }
+            }
+
+            if (desktopThemeSelect) {
+                desktopThemeSelect.addEventListener('change', function () {
+                    if (!this.value) {
+                        return;
+                    }
+                    applyTheme(this.value);
+                });
+            }
+
+            if (mobileThemeSelect) {
+                mobileThemeSelect.addEventListener('change', function () {
+                    if (!this.value) {
+                        return;
+                    }
+                    applyTheme(this.value);
+                });
+            }
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                const imageModalVisible = !document.getElementById('imageModal').classList.contains('hidden');
+                if (imageModalVisible) {
+                    closeImageModal();
+                    return;
+                }
+
+                closeSettingsMenu();
+                closePostMenus();
+                closeSupportPanel();
+                document.getElementById('mobileSidebar').classList.add('hidden');
+                document.querySelectorAll('.comments-modal').forEach(function (modal) {
+                    if (!modal.classList.contains('hidden')) {
+                        const itemId = modal.id.replace('commentsModal-', '');
+                        closeCommentsModal(itemId);
+                    }
+                });
+                closeActionModal();
+                closePostModal();
+                refreshScrollLock();
+            }
         });
-    }
 
-    toggleBountyField();
+        document.addEventListener('click', function (event) {
+            const settingsWrap = document.getElementById('settingsWrap');
+            if (settingsWrap && !settingsWrap.contains(event.target)) {
+                closeSettingsMenu();
+            }
 
-    initializeCommentDoubleTapDelete();
-</script>
+            const postMenuWrap = event.target.closest('[data-post-menu-wrap]');
+            if (!postMenuWrap) {
+                closePostMenus();
+            }
+        });
+
+        document.getElementById('mainOverlay').addEventListener('click', function () {
+            closeAllModals();
+        });
+
+        initializeDarkMode();
+        initializeMobileSidebar();
+        initializeThemeSelector();
+        toggleBountyField();
+        initializeCommentDoubleTapDelete();
+        initializeAiHelpAssistant();
+    </script>
 </body>
 </html>

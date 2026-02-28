@@ -1,383 +1,315 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="h-full">
 <head>
-    <title>Chat - Campus Lost & Found</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Campus Lost &amp; Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+    </script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background: linear-gradient(140deg, #eef2ff, #f0f9ff);
-            color: #1f2937;
+        :root {
+            --chat-messages-bg: rgba(248, 250, 252, 0.7);
         }
 
-        .container {
-            width: min(920px, calc(100% - 24px));
-            margin: 14px auto;
-            display: grid;
-            grid-template-rows: auto 1fr auto;
-            height: calc(100vh - 28px);
-            background: rgba(255, 255, 255, 0.96);
-            border: 1px solid #dbeafe;
-            border-radius: 16px;
-            overflow: hidden;
-            backdrop-filter: blur(4px);
+        html[data-chat-bg="sky"] {
+            --chat-messages-bg: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
         }
 
-        .top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 14px;
-            border-bottom: 1px solid #dbeafe;
-            background: #f8fbff;
+        html[data-chat-bg="lavender"] {
+            --chat-messages-bg: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
         }
 
-        .top h3 {
-            margin: 0;
-            font-size: 18px;
+        html[data-chat-bg="mint"] {
+            --chat-messages-bg: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
         }
 
-        .top .sub {
-            color: #6b7280;
-            font-size: 12px;
-            margin-top: 3px;
+        html[data-chat-bg="sunset"] {
+            --chat-messages-bg: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
         }
 
-        .btn {
-            display: inline-block;
-            text-decoration: none;
-            color: #ffffff;
-            background: linear-gradient(135deg, #2563eb, #4338ca);
-            border-radius: 8px;
-            padding: 8px 12px;
+        html[data-chat-bg="dusk"] {
+            --chat-messages-bg: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
         }
 
-        .item-ref {
-            margin: 10px 12px 0;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1d4ed8;
-            border-radius: 8px;
-            padding: 8px 10px;
-            font-size: 13px;
+        html.dark[data-chat-bg="sky"] {
+            --chat-messages-bg: linear-gradient(180deg, #0c4a6e 0%, #082f49 100%);
         }
 
-        .messages {
-            padding: 12px;
-            overflow-y: auto;
-            background: #f5f9ff;
+        html.dark[data-chat-bg="lavender"] {
+            --chat-messages-bg: linear-gradient(180deg, #4c1d95 0%, #312e81 100%);
+        }
+
+        html.dark[data-chat-bg="mint"] {
+            --chat-messages-bg: linear-gradient(180deg, #065f46 0%, #064e3b 100%);
+        }
+
+        html.dark[data-chat-bg="sunset"] {
+            --chat-messages-bg: linear-gradient(180deg, #7c2d12 0%, #7f1d1d 100%);
+        }
+
+        html.dark[data-chat-bg="dusk"] {
+            --chat-messages-bg: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        @keyframes bubbleIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes typingDot {
+            0%, 80%, 100% {
+                transform: translateY(0);
+                opacity: 0.35;
+            }
+            40% {
+                transform: translateY(-3px);
+                opacity: 1;
+            }
+        }
+
+        @keyframes waveformPulse {
+            0%, 100% {
+                transform: scaleY(0.45);
+            }
+            50% {
+                transform: scaleY(1);
+            }
         }
 
         .message {
-            max-width: 76%;
-            margin-bottom: 9px;
-            padding: 9px 10px;
-            border-radius: 10px;
-            font-size: 14px;
-            line-height: 1.45;
-            word-break: break-word;
+            animation: bubbleIn 0.2s ease;
         }
 
-        .mine {
-            margin-left: auto;
-            background: linear-gradient(135deg, #2563eb, #4338ca);
-            color: #ffffff;
-            border-bottom-right-radius: 3px;
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: currentColor;
+            animation: typingDot 1s infinite;
         }
 
-        .theirs {
-            margin-right: auto;
-            background: #ffffff;
-            color: #1f2937;
-            border: 1px solid #e5e7eb;
-            border-bottom-left-radius: 3px;
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.15s;
         }
 
-        .message-media {
-            margin-top: 6px;
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.3s;
         }
 
-        .message-media img {
-            max-width: min(100%, 280px);
-            border-radius: 10px;
-            border: 1px solid rgba(0, 0, 0, 0.12);
-            display: block;
-            cursor: zoom-in;
+        .wave-bar {
+            width: 3px;
+            border-radius: 999px;
+            background: rgba(51, 65, 85, 0.35);
+            transform-origin: bottom;
+            animation: waveformPulse 1s ease-in-out infinite;
         }
 
-        .mine .message-media img {
-            border-color: rgba(255, 255, 255, 0.4);
+        .dark .wave-bar {
+            background: rgba(148, 163, 184, 0.55);
         }
 
-        .message-media audio {
-            width: min(280px, 100%);
-            max-width: 100%;
+        .wave-bar:nth-child(2n) {
+            animation-delay: 0.08s;
         }
 
-        .message-item-ref {
-            font-size: 12px;
-            margin-bottom: 4px;
-            opacity: 0.95;
+        .wave-bar:nth-child(3n) {
+            animation-delay: 0.16s;
         }
 
-        .meta {
-            font-size: 11px;
-            opacity: 0.8;
-            margin-top: 4px;
+        .media-modal {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
         }
 
-        .compose {
-            border-top: 1px solid #dbeafe;
-            background: #ffffff;
-            padding: 10px;
+        .media-modal.open {
+            opacity: 1;
+            pointer-events: auto;
         }
 
-        .compose form {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .compose input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            box-sizing: border-box;
-        }
-
-        .compose-main {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .compose-tools {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .tool-btn,
-        .send-btn {
-            border: none;
-            color: #ffffff;
-            border-radius: 8px;
-            padding: 10px 14px;
-            cursor: pointer;
-        }
-
-        .tool-btn {
-            padding: 10px 12px;
-            font-size: 14px;
-            background: #334155;
-        }
-
-        .send-btn {
-            background: #0f766e;
-        }
-
-        .tool-btn.recording {
-            background: #dc2626;
-        }
-
-        .compose-preview {
-            grid-column: 1 / -1;
-            font-size: 12px;
-            color: #475569;
-            min-height: 16px;
-        }
-
-        .hidden-input {
-            display: none;
-        }
-
-        .image-viewer {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.88);
-            z-index: 5000;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            box-sizing: border-box;
-            cursor: zoom-out;
-        }
-
-        .image-viewer img {
-            max-width: 96vw;
-            max-height: 92vh;
-            border-radius: 10px;
-            border: 2px solid #ffffff;
-            object-fit: contain;
-        }
-
-        .image-viewer-close {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            border: 0;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.16);
-            color: #ffffff;
-            font-size: 20px;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-        }
-
-        .empty {
-            text-align: center;
-            color: #6b7280;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 640px) {
-            .container {
-                width: 100%;
-                margin: 0;
-                height: 100vh;
-                border-radius: 0;
-                border: none;
-            }
-
-            .message {
-                max-width: 88%;
-            }
-
-            .compose form {
-                grid-template-columns: 1fr;
-            }
-
-            .compose-main {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .compose-tools {
-                justify-content: space-between;
-            }
-
-            .tool-btn,
-            .send-btn {
-                flex: 1;
-            }
-        }
-
-        html[data-device="desktop"] .container {
-            width: min(1220px, calc(100% - 48px));
-            margin: 22px auto;
-            height: calc(100vh - 44px);
-            border-radius: 18px;
-        }
-
-        html[data-device="desktop"] .top {
-            padding: 14px 18px;
-        }
-
-        html[data-device="desktop"] .top h3 {
-            font-size: 20px;
-        }
-
-        html[data-device="desktop"] .messages {
-            padding: 18px;
-        }
-
-        html[data-device="desktop"] .message {
-            max-width: 62%;
-            font-size: 15px;
-            padding: 10px 12px;
-        }
-
-        html[data-device="desktop"] .compose {
-            padding: 12px 14px;
-        }
-
-        html[data-device="desktop"] .compose form {
-            gap: 10px;
-        }
-
-        html[data-device="desktop"] .compose input[type="text"] {
-            padding: 12px;
-            font-size: 15px;
+        .messages {
+            background: var(--chat-messages-bg) !important;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div>
-            <div class="top">
-                <div>
-                    <h3>{{ partner[2] or partner[1] }}</h3>
-                    <div class="sub">@{{ partner[1] }}</div>
-                </div>
-                <a class="btn" href="/inbox">Inbox</a>
-            </div>
+<body class="h-full bg-slate-100 text-slate-900 transition-all duration-200 dark:bg-slate-950 dark:text-slate-100">
+    <!-- App Shell -->
+    <div class="h-screen px-0 py-0 sm:px-4 sm:py-4">
+        <div class="mx-auto flex h-full w-full max-w-3xl flex-col overflow-hidden border border-slate-200/80 bg-white/90 shadow-xl transition-all duration-200 dark:border-slate-800 dark:bg-slate-900/90 sm:rounded-2xl">
 
+            <!-- Header -->
+            <header class="sticky top-0 z-20 border-b border-slate-200/70 bg-white/70 px-4 py-3 backdrop-blur-md transition-all duration-200 dark:border-slate-800 dark:bg-slate-900/70 sm:px-5">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex min-w-0 items-center gap-3">
+                        <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-sm">
+                            {{ ((partner[2] or partner[1] or 'U')|string)[0]|upper }}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="truncate text-base font-semibold sm:text-lg">{{ partner[2] or partner[1] }}</div>
+                            <div class="truncate text-xs text-slate-500 dark:text-slate-400">@{{ partner[1] }}</div>
+                            <div class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                                <span id="presenceDot" class="h-2 w-2 rounded-full bg-slate-400"></span>
+                                <span id="presenceText">Last seen recently</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <a href="/inbox" title="Back to Inbox" aria-label="Back to Inbox" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-all duration-200 hover:scale-105 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                                <path fill-rule="evenodd" d="M9.53 3.97a.75.75 0 0 1 0 1.06L3.56 11H21a.75.75 0 0 1 0 1.5H3.56l5.97 5.97a.75.75 0 1 1-1.06 1.06l-7.25-7.25a.75.75 0 0 1 0-1.06l7.25-7.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/>
+                            </svg>
+                        </a>
+                        <div class="relative" id="chatSettingsWrap">
+                            <button id="chatSettingsBtn" type="button" title="Open settings" aria-label="Open settings" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-all duration-200 hover:scale-105 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
+                                ⚙
+                            </button>
+                            <div id="chatSettingsMenu" class="absolute right-0 mt-2 hidden w-64 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Settings</p>
+                                <button id="themeToggle" type="button" class="mb-3 inline-flex h-10 w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 transition-all duration-200 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">Switch to dark mode</button>
+                                <label for="messageBgSelect" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Message Background</label>
+                                <select id="messageBgSelect" class="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition-all duration-200 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                                    <option value="default">Default</option>
+                                    <option value="sky">Sky</option>
+                                    <option value="lavender">Lavender</option>
+                                    <option value="mint">Mint</option>
+                                    <option value="sunset">Sunset</option>
+                                    <option value="dusk">Dusk</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="typingIndicator" class="mt-2 hidden items-center gap-1.5 text-xs text-slate-500 transition-all duration-200 dark:text-slate-400">
+                    <span>typing</span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            </header>
+
+            <!-- Item Context -->
             {% if chat_item %}
-                <div class="item-ref">Messaging about item: #{{ chat_item[0] }} - {{ chat_item[1] }}</div>
-            {% endif %}
-        </div>
-
-        <div id="messages" class="messages" data-latest-message-id="{{ messages[-1][0] if messages else 0 }}">
-            {% if messages %}
-                {% for msg in messages %}
-                    <div class="message {% if msg[1] == current_user_id %}mine{% else %}theirs{% endif %}" data-message-id="{{ msg[0] }}">
-                        {% if msg[5] %}
-                            <div class="message-item-ref"><strong>Item #{{ msg[5] }}</strong></div>
-                        {% endif %}
-
-                        {% if msg[6] == 'image' and msg[7] %}
-                            <div class="message-media">
-                                <img src="{{ url_for('static', filename='messages/' + msg[7]) }}" alt="Sent image" onclick="openImageViewer(this.src)">
-                            </div>
-                        {% elif msg[6] == 'audio' and msg[7] %}
-                            <div class="message-media">
-                                <audio controls preload="metadata">
-                                    <source src="{{ url_for('static', filename='messages/' + msg[7]) }}">
-                                    Your browser does not support audio playback.
-                                </audio>
-                            </div>
-                        {% endif %}
-
-                        {% if msg[3] %}
-                            <div>{{ msg[3] }}</div>
-                        {% endif %}
-                        <div class="meta">{{ msg[4] }}</div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty">No messages yet. Start the conversation.</div>
-            {% endif %}
-        </div>
-
-        <div class="compose">
-            <form id="chatForm" method="POST" action="/chat/{{ partner[0] }}/send" enctype="multipart/form-data" data-current-user-id="{{ current_user_id }}" data-partner-id="{{ partner[0] }}">
-                {% if chat_item_id %}
-                    <input type="hidden" name="item_id" value="{{ chat_item_id }}">
-                {% endif %}
-                <div class="compose-main">
-                    <input id="messageInput" type="text" name="message_text" placeholder="Type a message...">
-                    <div class="compose-tools">
-                        <input id="imageFile" class="hidden-input" type="file" name="image_file" accept="image/*">
-                        <input id="audioFile" class="hidden-input" type="file" name="audio_file" accept="audio/*">
-                        <button id="attachBtn" type="button" class="tool-btn" title="Send photo">📷 Photo</button>
-                        <button id="recordBtn" type="button" class="tool-btn" title="Record voice">🎤 Voice</button>
-                        <button type="submit" class="send-btn">Send</button>
-                    </div>
+                <div class="border-b border-blue-100 bg-blue-50/80 px-4 py-2 text-xs text-blue-700 transition-all duration-200 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300 sm:px-5">
+                    Messaging about item: <span class="font-semibold">#{{ chat_item[0] }} - {{ chat_item[1] }}</span>
                 </div>
-                <div id="composePreview" class="compose-preview"></div>
-            </form>
+            {% endif %}
+
+            <!-- Messages -->
+            <main id="messages" class="messages flex-1 overflow-y-auto scroll-smooth bg-slate-50/70 px-3 py-4 transition-all duration-200 dark:bg-slate-950/40 sm:px-5" data-latest-message-id="{{ messages[-1][0] if messages else 0 }}">
+                {% if messages %}
+                    {% for msg in messages %}
+                        {% set mine = msg[1] == current_user_id %}
+                        {% set seen_status = (msg|length > 8 and msg[8]) %}
+                        <div class="message {{ 'mine ml-auto' if mine else 'theirs mr-auto' }} group mb-3 w-full max-w-[70%] rounded-2xl px-3 py-2.5 shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md {{ 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white' if mine else 'border border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100' }}" data-message-id="{{ msg[0] }}" data-message-status="{{ 'seen' if seen_status else 'delivered' if mine else '' }}">
+                            {% if msg[5] %}
+                                <div class="message-item-ref mb-1 text-[11px] {{ 'text-blue-100' if mine else 'text-slate-500 dark:text-slate-400' }}">
+                                    <strong>Item #{{ msg[5] }}</strong>
+                                </div>
+                            {% endif %}
+
+                            {% if msg[6] == 'image' and msg[7] %}
+                                <div class="message-media mb-1.5">
+                                    <img src="{{ url_for('static', filename='messages/' + msg[7]) }}" alt="Sent image" onclick="openImageViewer(this.src)" class="max-w-full rounded-xl border border-black/10 object-cover transition-all duration-200 hover:scale-[1.02] hover:opacity-95 {{ 'border-white/30' if mine else '' }} cursor-zoom-in">
+                                </div>
+                            {% elif msg[6] == 'audio' and msg[7] %}
+                                <div class="message-media mb-1.5">
+                                    <div data-audio-card class="voice-card flex min-w-[220px] items-center gap-2 rounded-xl {{ 'bg-white/15' if mine else 'bg-slate-100 dark:bg-slate-800' }} px-2.5 py-2 transition-all duration-200">
+                                        <button type="button" data-audio-toggle class="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full {{ 'bg-white text-blue-600' if mine else 'bg-white text-slate-700 dark:bg-slate-700 dark:text-slate-200' }} text-xs font-semibold transition-all duration-200 hover:scale-105">▶</button>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="mb-1 flex h-5 items-end gap-[2px]" aria-hidden="true">
+                                                <span class="wave-bar h-2"></span><span class="wave-bar h-4"></span><span class="wave-bar h-3"></span><span class="wave-bar h-5"></span><span class="wave-bar h-3"></span><span class="wave-bar h-4"></span><span class="wave-bar h-2"></span>
+                                            </div>
+                                            <div class="h-1.5 w-full overflow-hidden rounded-full {{ 'bg-white/30' if mine else 'bg-slate-300 dark:bg-slate-700' }}">
+                                                <div data-audio-progress class="h-full w-0 {{ 'bg-white' if mine else 'bg-blue-500' }} transition-all duration-200"></div>
+                                            </div>
+                                        </div>
+                                        <span data-audio-duration class="w-10 text-right text-[11px] {{ 'text-blue-100' if mine else 'text-slate-500 dark:text-slate-400' }}">0:00</span>
+                                        <audio class="sr-only" controls preload="metadata">
+                                            <source src="{{ url_for('static', filename='messages/' + msg[7]) }}">
+                                            Your browser does not support audio playback.
+                                        </audio>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if msg[3] %}
+                                <div class="whitespace-pre-wrap break-words text-sm leading-relaxed sm:text-[15px]">{{ msg[3] }}</div>
+                            {% endif %}
+
+                            <div class="meta mt-1.5 flex items-center justify-end gap-1 text-[11px] {{ 'text-blue-100' if mine else 'text-slate-500 dark:text-slate-400' }}">
+                                <span>{{ msg[4] }}</span>
+                                {% if mine %}
+                                    {% if seen_status %}
+                                        <span class="font-semibold text-sky-200">✓✓</span>
+                                    {% else %}
+                                        <span class="font-semibold">✓✓</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500 transition-all duration-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+                        No messages yet. Start the conversation.
+                    </div>
+                {% endif %}
+            </main>
+
+            <!-- Compose Bar -->
+            <footer class="sticky bottom-0 z-20 border-t border-slate-200 bg-white/90 px-3 py-3 backdrop-blur transition-all duration-200 dark:border-slate-800 dark:bg-slate-900/90 sm:px-5">
+                <form id="chatForm" method="POST" action="/chat/{{ partner[0] }}/send" enctype="multipart/form-data" data-current-user-id="{{ current_user_id }}" data-partner-id="{{ partner[0] }}" class="space-y-2">
+                    {% if chat_item_id %}
+                        <input type="hidden" name="item_id" value="{{ chat_item_id }}">
+                    {% endif %}
+
+                    <input id="imageFile" class="hidden" type="file" name="image_file" accept="image/*">
+                    <input id="audioFile" class="hidden" type="file" name="audio_file" accept="audio/*">
+
+                    <div class="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white px-2 py-2 shadow-sm transition-all duration-200 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:ring-blue-900/40">
+                        <button id="attachBtn" type="button" title="Send photo" class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-slate-500 transition-all duration-200 hover:scale-105 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                                <path d="M19.5 4.5h-3.675a1.5 1.5 0 0 1-1.06-.44l-.88-.878A1.5 1.5 0 0 0 12.825 2.75h-1.65a1.5 1.5 0 0 0-1.06.44l-.88.878a1.5 1.5 0 0 1-1.06.44H4.5A2.25 2.25 0 0 0 2.25 6.75v10.5A2.25 2.25 0 0 0 4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5ZM12 8.25a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z" />
+                            </svg>
+                        </button>
+
+                        <textarea id="messageInput" name="message_text" rows="1" placeholder="Type a message..." class="max-h-28 min-h-[40px] flex-1 resize-none bg-transparent px-1 py-2 text-sm outline-none transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 sm:text-[15px]"></textarea>
+
+                        <button id="recordBtn" type="button" title="Record voice" class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-slate-500 transition-all duration-200 hover:scale-105 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                                <path d="M12 14.25a3.75 3.75 0 0 0 3.75-3.75V6a3.75 3.75 0 0 0-7.5 0v4.5A3.75 3.75 0 0 0 12 14.25Z" />
+                                <path d="M6 10.5a.75.75 0 0 1 .75.75 5.25 5.25 0 1 0 10.5 0 .75.75 0 0 1 1.5 0 6.75 6.75 0 0 1-6 6.705V21a.75.75 0 0 1-1.5 0v-3.045A6.75 6.75 0 0 1 5.25 11.25.75.75 0 0 1 6 10.5Z" />
+                            </svg>
+                        </button>
+
+                        <button id="sendBtn" type="submit" title="Send" class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-all duration-200 hover:scale-105 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                                <path d="M3.478 2.404a.75.75 0 0 0-.926.94l2.432 7.917H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.917a.75.75 0 0 0 .982.92l18-7.5a.75.75 0 0 0 0-1.386l-18-7.5a.75.75 0 0 0-.056-.018Z" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div id="composePreview" class="min-h-[16px] px-1 text-xs text-slate-500 transition-all duration-200 dark:text-slate-400"></div>
+                </form>
+            </footer>
         </div>
     </div>
 
-    <div id="imageViewer" class="image-viewer" onclick="closeImageViewer()">
-        <button type="button" class="image-viewer-close" aria-label="Close image" onclick="closeImageViewer()">×</button>
-        <img id="imageViewerImg" src="" alt="Chat image preview" onclick="event.stopPropagation()">
+    <!-- Image Modal -->
+    <div id="imageViewer" class="media-modal fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4" onclick="closeImageViewer()">
+        <button type="button" class="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-2xl text-white transition-all duration-200 hover:scale-105 hover:bg-white/25" aria-label="Close image" onclick="closeImageViewer()">×</button>
+        <img id="imageViewerImg" src="" alt="Chat image preview" class="max-h-[92vh] max-w-[96vw] rounded-xl border border-white/30 object-contain" onclick="event.stopPropagation()">
     </div>
 
     <script>
@@ -388,41 +320,169 @@
             document.documentElement.setAttribute('data-device', deviceType);
         }
 
-        updateDeviceType();
-        window.addEventListener('resize', updateDeviceType);
+        function initializeTheme() {
+            const root = document.documentElement;
+            const themeToggle = document.getElementById('themeToggle');
+            const savedTheme = localStorage.getItem('chatTheme');
+            const useDark = savedTheme ? savedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-        const messagesBox = document.getElementById('messages');
-        messagesBox.scrollTop = messagesBox.scrollHeight;
+            function setThemeLabel(isDarkMode) {
+                themeToggle.textContent = isDarkMode ? 'Switch to light mode' : 'Switch to dark mode';
+            }
 
-        const chatForm = document.getElementById('chatForm');
-        const messageInput = document.getElementById('messageInput');
-        const imageFileInput = document.getElementById('imageFile');
-        const audioFileInput = document.getElementById('audioFile');
-        const attachBtn = document.getElementById('attachBtn');
-        const recordBtn = document.getElementById('recordBtn');
-        const composePreview = document.getElementById('composePreview');
-        const currentUserId = Number(chatForm.dataset.currentUserId) || 0;
-        const partnerId = Number(chatForm.dataset.partnerId) || 0;
+            root.classList.toggle('dark', useDark);
+            setThemeLabel(useDark);
 
-        let mediaRecorder = null;
-        let mediaStream = null;
-        let isRecording = false;
-        let chunks = [];
-        let latestMessageId = Number(messagesBox.dataset.latestMessageId || '0') || 0;
-        let isFetchingMessages = false;
+            themeToggle.addEventListener('click', function () {
+                const willBeDark = !root.classList.contains('dark');
+                root.classList.toggle('dark', willBeDark);
+                localStorage.setItem('chatTheme', willBeDark ? 'dark' : 'light');
+                setThemeLabel(willBeDark);
+            });
+        }
+
+        function initializeMessageBackgroundTheme() {
+            const root = document.documentElement;
+            const messageBgSelect = document.getElementById('messageBgSelect');
+            const validThemes = ['default', 'sky', 'lavender', 'mint', 'sunset', 'dusk'];
+            const savedMessageTheme = localStorage.getItem('chatMessageTheme');
+            const activeTheme = validThemes.includes(savedMessageTheme) ? savedMessageTheme : 'default';
+
+            function applyMessageTheme(themeName) {
+                if (themeName === 'default') {
+                    root.removeAttribute('data-chat-bg');
+                } else {
+                    root.setAttribute('data-chat-bg', themeName);
+                }
+                localStorage.setItem('chatMessageTheme', themeName);
+                if (messageBgSelect.value !== themeName) {
+                    messageBgSelect.value = themeName;
+                }
+            }
+
+            applyMessageTheme(activeTheme);
+
+            messageBgSelect.addEventListener('change', function () {
+                applyMessageTheme(this.value);
+            });
+        }
+
+        function initializeChatSettingsMenu() {
+            const settingsWrap = document.getElementById('chatSettingsWrap');
+            const settingsButton = document.getElementById('chatSettingsBtn');
+            const settingsMenu = document.getElementById('chatSettingsMenu');
+
+            function closeSettingsMenu() {
+                settingsMenu.classList.add('hidden');
+            }
+
+            settingsButton.addEventListener('click', function (event) {
+                event.stopPropagation();
+                settingsMenu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!settingsWrap.contains(event.target)) {
+                    closeSettingsMenu();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeSettingsMenu();
+                }
+            });
+        }
+
+        function formatTime(seconds) {
+            if (!Number.isFinite(seconds) || seconds < 0) {
+                return '0:00';
+            }
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return mins + ':' + String(secs).padStart(2, '0');
+        }
+
+        function initializeAudioCards(rootElement) {
+            const root = rootElement || document;
+            const cards = root.querySelectorAll('[data-audio-card]');
+
+            cards.forEach(function (card) {
+                if (card.dataset.bound === '1') {
+                    return;
+                }
+
+                const audio = card.querySelector('audio');
+                const toggle = card.querySelector('[data-audio-toggle]');
+                const durationText = card.querySelector('[data-audio-duration]');
+                const progress = card.querySelector('[data-audio-progress]');
+
+                if (!audio || !toggle || !durationText || !progress) {
+                    return;
+                }
+
+                card.dataset.bound = '1';
+
+                function setToggleLabel(isPlaying) {
+                    toggle.textContent = isPlaying ? '⏸' : '▶';
+                }
+
+                audio.addEventListener('loadedmetadata', function () {
+                    durationText.textContent = formatTime(audio.duration);
+                });
+
+                audio.addEventListener('timeupdate', function () {
+                    if (!audio.duration) {
+                        return;
+                    }
+                    const percent = (audio.currentTime / audio.duration) * 100;
+                    progress.style.width = Math.max(0, Math.min(100, percent)) + '%';
+                });
+
+                audio.addEventListener('ended', function () {
+                    setToggleLabel(false);
+                    progress.style.width = '0%';
+                });
+
+                toggle.addEventListener('click', function () {
+                    const allPlaying = document.querySelectorAll('[data-audio-card] audio');
+                    allPlaying.forEach(function (otherAudio) {
+                        if (otherAudio !== audio && !otherAudio.paused) {
+                            otherAudio.pause();
+                            const otherToggle = otherAudio.closest('[data-audio-card]')?.querySelector('[data-audio-toggle]');
+                            if (otherToggle) {
+                                otherToggle.textContent = '▶';
+                            }
+                        }
+                    });
+
+                    if (audio.paused) {
+                        audio.play();
+                        setToggleLabel(true);
+                    } else {
+                        audio.pause();
+                        setToggleLabel(false);
+                    }
+                });
+
+                setToggleLabel(false);
+            });
+        }
 
         function openImageViewer(imageSrc) {
             const viewer = document.getElementById('imageViewer');
             const image = document.getElementById('imageViewerImg');
             image.src = imageSrc;
-            viewer.style.display = 'flex';
+            viewer.classList.add('open');
+            document.body.classList.add('overflow-hidden');
         }
 
         function closeImageViewer() {
             const viewer = document.getElementById('imageViewer');
             const image = document.getElementById('imageViewerImg');
-            viewer.style.display = 'none';
+            viewer.classList.remove('open');
             image.src = '';
+            document.body.classList.remove('overflow-hidden');
         }
 
         function setAudioBlob(blob) {
@@ -442,10 +502,30 @@
             } else if (audioName) {
                 composePreview.textContent = 'Voice selected: ' + audioName;
             } else if (isRecording) {
-                composePreview.textContent = 'Recording voice... tap Voice again to stop.';
+                composePreview.textContent = 'Recording voice... tap again to stop.';
             } else {
                 composePreview.textContent = '';
             }
+        }
+
+        function autoResizeInput() {
+            messageInput.style.height = 'auto';
+            const maxHeight = 112;
+            messageInput.style.height = Math.min(messageInput.scrollHeight, maxHeight) + 'px';
+        }
+
+        function updateTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            const hasDraft = messageInput.value.trim().length > 0;
+            typingIndicator.classList.toggle('hidden', !hasDraft);
+            typingIndicator.classList.toggle('flex', hasDraft);
+        }
+
+        function updateSendButtonState() {
+            const textValue = messageInput.value.trim();
+            const hasImage = imageFileInput.files.length > 0;
+            const hasAudio = audioFileInput.files.length > 0;
+            sendBtn.disabled = !textValue && !hasImage && !hasAudio && !isRecording;
         }
 
         function escapeHtml(text) {
@@ -462,6 +542,32 @@
             return messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < threshold;
         }
 
+        function resolveMessageStatus(messageData) {
+            if (!messageData || Number(messageData.sender_id) !== Number(currentUserId)) {
+                return '';
+            }
+            if (messageData.delivery_status === 'sent') {
+                return 'sent';
+            }
+            if (messageData.delivery_status === 'seen' || messageData.is_seen || messageData.is_read) {
+                return 'seen';
+            }
+            return 'delivered';
+        }
+
+        function statusTickHtml(status) {
+            if (!status) {
+                return '';
+            }
+            if (status === 'sent') {
+                return '<span class="font-semibold">✓</span>';
+            }
+            if (status === 'seen') {
+                return '<span class="font-semibold text-sky-200">✓✓</span>';
+            }
+            return '<span class="font-semibold">✓✓</span>';
+        }
+
         function appendMessage(messageData, forceScroll) {
             if (!messageData || !messageData.id) {
                 return;
@@ -474,40 +580,59 @@
 
             const shouldScroll = forceScroll || shouldAutoScroll();
             const isMine = Number(messageData.sender_id) === Number(currentUserId);
+            const status = resolveMessageStatus(messageData);
 
             const messageElement = document.createElement('div');
-            messageElement.className = 'message ' + (isMine ? 'mine' : 'theirs');
+            messageElement.className =
+                'message ' +
+                (isMine ? 'mine ml-auto bg-gradient-to-br from-blue-600 to-indigo-600 text-white' : 'theirs mr-auto border border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100') +
+                ' group mb-3 w-full max-w-[70%] rounded-2xl px-3 py-2.5 shadow-sm transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md';
             messageElement.setAttribute('data-message-id', String(messageData.id));
+            messageElement.setAttribute('data-message-status', status);
 
             const itemRefHtml = messageData.item_id
-                ? '<div class="message-item-ref"><strong>Item #' + escapeHtml(messageData.item_id) + '</strong></div>'
+                ? '<div class="message-item-ref mb-1 text-[11px] ' + (isMine ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400') + '"><strong>Item #' + escapeHtml(messageData.item_id) + '</strong></div>'
                 : '';
 
             let mediaHtml = '';
             if (messageData.message_type === 'image' && messageData.media_url) {
                 mediaHtml =
-                    '<div class="message-media">' +
-                        '<img src="' + escapeHtml(messageData.media_url) + '" alt="Sent image">' +
+                    '<div class="message-media mb-1.5">' +
+                        '<img src="' + escapeHtml(messageData.media_url) + '" alt="Sent image" class="max-w-full rounded-xl border border-black/10 object-cover transition-all duration-200 hover:scale-[1.02] hover:opacity-95 ' + (isMine ? 'border-white/30' : '') + ' cursor-zoom-in">' +
                     '</div>';
             } else if (messageData.message_type === 'audio' && messageData.media_url) {
                 mediaHtml =
-                    '<div class="message-media">' +
-                        '<audio controls preload="metadata">' +
-                            '<source src="' + escapeHtml(messageData.media_url) + '">' +
-                            'Your browser does not support audio playback.' +
-                        '</audio>' +
+                    '<div class="message-media mb-1.5">' +
+                        '<div data-audio-card class="voice-card flex min-w-[220px] items-center gap-2 rounded-xl ' + (isMine ? 'bg-white/15' : 'bg-slate-100 dark:bg-slate-800') + ' px-2.5 py-2 transition-all duration-200">' +
+                            '<button type="button" data-audio-toggle class="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ' + (isMine ? 'bg-white text-blue-600' : 'bg-white text-slate-700 dark:bg-slate-700 dark:text-slate-200') + ' text-xs font-semibold transition-all duration-200 hover:scale-105">▶</button>' +
+                            '<div class="min-w-0 flex-1">' +
+                                '<div class="mb-1 flex h-5 items-end gap-[2px]" aria-hidden="true">' +
+                                    '<span class="wave-bar h-2"></span><span class="wave-bar h-4"></span><span class="wave-bar h-3"></span><span class="wave-bar h-5"></span><span class="wave-bar h-3"></span><span class="wave-bar h-4"></span><span class="wave-bar h-2"></span>' +
+                                '</div>' +
+                                '<div class="h-1.5 w-full overflow-hidden rounded-full ' + (isMine ? 'bg-white/30' : 'bg-slate-300 dark:bg-slate-700') + '">' +
+                                    '<div data-audio-progress class="h-full w-0 ' + (isMine ? 'bg-white' : 'bg-blue-500') + ' transition-all duration-200"></div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<span data-audio-duration class="w-10 text-right text-[11px] ' + (isMine ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400') + '">0:00</span>' +
+                            '<audio class="sr-only" controls preload="metadata">' +
+                                '<source src="' + escapeHtml(messageData.media_url) + '">' +
+                                'Your browser does not support audio playback.' +
+                            '</audio>' +
+                        '</div>' +
                     '</div>';
             }
 
             const textHtml = messageData.message_text
-                ? '<div>' + escapeHtml(messageData.message_text) + '</div>'
+                ? '<div class="whitespace-pre-wrap break-words text-sm leading-relaxed sm:text-[15px]">' + escapeHtml(messageData.message_text) + '</div>'
                 : '';
 
-            messageElement.innerHTML =
-                itemRefHtml +
-                mediaHtml +
-                textHtml +
-                '<div class="meta">' + escapeHtml(messageData.created_at) + '</div>';
+            const metaHtml =
+                '<div class="meta mt-1.5 flex items-center justify-end gap-1 text-[11px] ' + (isMine ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400') + '">' +
+                    '<span>' + escapeHtml(messageData.created_at) + '</span>' +
+                    statusTickHtml(status) +
+                '</div>';
+
+            messageElement.innerHTML = itemRefHtml + mediaHtml + textHtml + metaHtml;
 
             const insertedImage = messageElement.querySelector('.message-media img');
             if (insertedImage) {
@@ -515,6 +640,8 @@
                     openImageViewer(insertedImage.src);
                 });
             }
+
+            initializeAudioCards(messageElement);
 
             const emptyState = messagesBox.querySelector('.empty');
             if (emptyState) {
@@ -588,17 +715,19 @@
                     }
 
                     isRecording = false;
-                    recordBtn.classList.remove('recording');
-                    recordBtn.textContent = '🎤 Voice';
+                    recordBtn.classList.remove('bg-rose-600', 'text-white');
+                    recordBtn.innerHTML = micIcon;
                     updateComposePreview();
+                    updateSendButtonState();
                 };
 
                 mediaRecorder.start();
                 isRecording = true;
-                recordBtn.classList.add('recording');
-                recordBtn.textContent = '⏹ Stop';
+                recordBtn.classList.add('bg-rose-600', 'text-white');
+                recordBtn.textContent = '⏹';
                 imageFileInput.value = '';
                 updateComposePreview();
+                updateSendButtonState();
             } catch (error) {
                 alert('Microphone access was blocked. Please allow microphone permission.');
             }
@@ -610,8 +739,49 @@
             }
         }
 
+        updateDeviceType();
+        initializeTheme();
+        initializeMessageBackgroundTheme();
+        initializeChatSettingsMenu();
+        window.addEventListener('resize', updateDeviceType);
+
+        const messagesBox = document.getElementById('messages');
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const imageFileInput = document.getElementById('imageFile');
+        const audioFileInput = document.getElementById('audioFile');
+        const attachBtn = document.getElementById('attachBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const composePreview = document.getElementById('composePreview');
+        const currentUserId = Number(chatForm.dataset.currentUserId) || 0;
+        const partnerId = Number(chatForm.dataset.partnerId) || 0;
+
+        const micIcon = recordBtn.innerHTML;
+
+        let mediaRecorder = null;
+        let mediaStream = null;
+        let isRecording = false;
+        let chunks = [];
+        let latestMessageId = Number(messagesBox.dataset.latestMessageId || '0') || 0;
+        let isFetchingMessages = false;
+
+        initializeAudioCards(document);
+        autoResizeInput();
+        updateComposePreview();
+        updateTypingIndicator();
+        updateSendButtonState();
+
         attachBtn.addEventListener('click', function () {
             imageFileInput.click();
+        });
+
+        messageInput.addEventListener('input', function () {
+            autoResizeInput();
+            updateTypingIndicator();
+            updateSendButtonState();
         });
 
         imageFileInput.addEventListener('change', function () {
@@ -619,6 +789,7 @@
                 audioFileInput.value = '';
             }
             updateComposePreview();
+            updateSendButtonState();
         });
 
         audioFileInput.addEventListener('change', function () {
@@ -626,6 +797,7 @@
                 imageFileInput.value = '';
             }
             updateComposePreview();
+            updateSendButtonState();
         });
 
         recordBtn.addEventListener('click', function () {
@@ -676,7 +848,10 @@
 
                 chatForm.reset();
                 chunks = [];
+                messageInput.style.height = 'auto';
                 updateComposePreview();
+                updateTypingIndicator();
+                updateSendButtonState();
                 messageInput.focus();
             } catch (error) {
                 alert('Network issue while sending. Please try again.');

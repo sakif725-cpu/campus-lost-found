@@ -156,7 +156,7 @@
                         <td>{{ item[5] }}</td>
                         <td>
                             {% if item[6] %}
-                                <img class="thumb" src="{{ url_for('static', filename='uploads/' + item[6]) }}" alt="Item photo" onclick="openImageModal(this.src)">
+                                <img class="thumb" src="{{ item[6] }}" alt="Item photo" onclick="openImageModal(this.src)">
                             {% else %}
                                 No image
                             {% endif %}

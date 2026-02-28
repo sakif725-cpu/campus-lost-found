@@ -2,17 +2,35 @@ from flask import Flask, render_template, request, redirect, session, jsonify, u
 import sqlite3
 import os
 import uuid
+import re
+import cloudinary
+import cloudinary.uploader
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'admin-secret-key')
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.secret_key = os.environ.get('SECRET_KEY')
+if not app.secret_key:
+    raise RuntimeError('SECRET_KEY environment variable is required')
 app.config['MESSAGE_MEDIA_FOLDER'] = 'static/messages'
 app.config['PROFILE_IMAGE_FOLDER'] = 'static/profile_photos'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+app.config['ITEM_IMAGE_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['MESSAGE_MEDIA_FOLDER'], exist_ok=True)
 os.makedirs(app.config['PROFILE_IMAGE_FOLDER'], exist_ok=True)
+os.makedirs(app.config['ITEM_IMAGE_FOLDER'], exist_ok=True)
+
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+    secure=True
+)
 
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'ogg', 'm4a', 'webm', 'aac'}
@@ -33,6 +51,44 @@ def save_message_media(file_storage, allowed_extensions):
     unique_name = f"{uuid.uuid4().hex}_{original_name}"
     file_storage.save(os.path.join(app.config['MESSAGE_MEDIA_FOLDER'], unique_name))
     return unique_name
+
+
+def upload_item_image_to_cloudinary(file_storage):
+    if not file_storage or file_storage.filename == '':
+        return None
+
+    if not is_allowed_file(file_storage.filename, ALLOWED_IMAGE_EXTENSIONS):
+        return None
+
+    cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME')
+    api_key = os.environ.get('CLOUDINARY_API_KEY')
+    api_secret = os.environ.get('CLOUDINARY_API_SECRET')
+
+    if not cloud_name or not api_key or not api_secret:
+        return None
+
+    try:
+        upload_result = cloudinary.uploader.upload(
+            file_storage,
+            folder='campus-lost-found/items',
+            resource_type='image'
+        )
+        return upload_result.get('secure_url')
+    except Exception:
+        return None
+
+
+def save_item_image_locally(file_storage):
+    if not file_storage or file_storage.filename == '':
+        return None
+
+    if not is_allowed_file(file_storage.filename, ALLOWED_IMAGE_EXTENSIONS):
+        return None
+
+    original_name = secure_filename(file_storage.filename)
+    unique_name = f"{uuid.uuid4().hex}_{original_name}"
+    file_storage.save(os.path.join(app.config['ITEM_IMAGE_FOLDER'], unique_name))
+    return url_for('static', filename=f'uploads/{unique_name}')
 
 
 def is_user_logged_in():
@@ -56,6 +112,129 @@ def get_unread_message_count(user_id):
     unread_count = cursor.fetchone()[0]
     conn.close()
     return unread_count
+
+
+HELP_AI_KB = [
+    {
+        'topic': 'post_item',
+        'keywords': ['post', 'add', 'item', 'lost', 'found', 'upload', 'image', 'bounty'],
+        'answer': (
+            "To post an item, use Quick Actions → Post an Item on the home page. "
+            "Fill title, description, location, date, and type (Lost/Found). "
+            "You can optionally upload an image, and for Lost items you can set a bounty amount."
+        )
+    },
+    {
+        'topic': 'search_filter',
+        'keywords': ['search', 'filter', 'find', 'lost', 'found', 'claimed'],
+        'answer': (
+            "Use the top search bar to search by title or description. "
+            "Use filters to switch between All, Lost, Found, and Claimed items."
+        )
+    },
+    {
+        'topic': 'claim_item',
+        'keywords': ['claim', 'claimed', 'mark', 'recovered'],
+        'answer': (
+            "When an item is recovered, the owner or admin can click Mark as Claimed from the item card. "
+            "This updates the item status so everyone can see it was resolved."
+        )
+    },
+    {
+        'topic': 'messages_chat',
+        'keywords': ['message', 'chat', 'inbox', 'send', 'photo', 'voice', 'conversation'],
+        'answer': (
+            "Open Inbox from the top-right message icon to view conversations. "
+            "Inside chat, you can send text, photos, and voice messages."
+        )
+    },
+    {
+        'topic': 'comments',
+        'keywords': ['comment', 'comments', 'reply', 'discussion'],
+        'answer': (
+            "Open Comments on any item card to read or add comments. "
+            "You can delete your own comments, and admins can moderate comments as well."
+        )
+    },
+    {
+        'topic': 'profile',
+        'keywords': ['profile', 'name', 'student id', 'department', 'email', 'phone', 'photo'],
+        'answer': (
+            "Open My Profile from the profile menu to update your personal details and profile photo. "
+            "Other users can view your public profile from your posts."
+        )
+    },
+    {
+        'topic': 'admin',
+        'keywords': ['admin', 'dashboard', 'moderate', 'delete post'],
+        'answer': (
+            "Admins can open Admin Dashboard to review posts, filter by type, and remove inappropriate entries."
+        )
+    },
+    {
+        'topic': 'settings_theme',
+        'keywords': ['theme', 'dark mode', 'background', 'settings', 'color'],
+        'answer': (
+            "Use Navigation → Settings on the home page to change app theme. "
+            "In chat, open the gear icon and use Settings to switch dark mode and message background themes."
+        )
+    },
+    {
+        'topic': 'account',
+        'keywords': ['register', 'signup', 'login', 'logout', 'password', 'account'],
+        'answer': (
+            "Create an account from Register, then login to access the platform. "
+            "Use Logout from the profile menu when finished."
+        )
+    }
+]
+
+
+def _normalize_help_text(text):
+    lowered_text = (text or '').lower().strip()
+    return re.sub(r'\s+', ' ', lowered_text)
+
+
+def generate_help_ai_answer(question_text):
+    normalized_question = _normalize_help_text(question_text)
+    if len(normalized_question) < 2:
+        return {
+            'answer': "Please type a complete question so I can help.",
+            'topic': 'clarify'
+        }
+
+    greeting_tokens = ('hi', 'hello', 'hey', 'namaste')
+    if any(token in normalized_question for token in greeting_tokens):
+        return {
+            'answer': (
+                "Hi! I can help with posting items, inbox/chat, comments, profile updates, "
+                "themes/settings, and admin features. Ask me anything about using this app."
+            ),
+            'topic': 'greeting'
+        }
+
+    best_entry = None
+    highest_score = 0
+    for entry in HELP_AI_KB:
+        score = sum(1 for keyword in entry['keywords'] if keyword in normalized_question)
+        if score > highest_score:
+            highest_score = score
+            best_entry = entry
+
+    if best_entry and highest_score > 0:
+        return {
+            'answer': best_entry['answer'],
+            'topic': best_entry['topic']
+        }
+
+    return {
+        'answer': (
+            "I can answer app-related questions like posting lost/found items, searching/filtering, "
+            "messaging, comments, profile updates, theme settings, and admin tools. "
+            "Please ask in one sentence, for example: 'How do I post a lost item?'"
+        ),
+        'topic': 'fallback'
+    }
 
 
 @app.context_processor
@@ -162,14 +341,17 @@ def init_db():
     if 'bounty_amount' not in columns:
         cursor.execute("ALTER TABLE items ADD COLUMN bounty_amount REAL")
 
-    cursor.execute("SELECT id FROM users WHERE username = ?", ('admin',))
-    admin_user = cursor.fetchone()
-    if not admin_user:
-        admin_password_hash = generate_password_hash('admin123')
-        cursor.execute(
-            "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-            ('admin', admin_password_hash, 'admin')
-        )
+    default_admin_username = os.environ.get('DEFAULT_ADMIN_USERNAME')
+    default_admin_password = os.environ.get('DEFAULT_ADMIN_PASSWORD')
+    if default_admin_username and default_admin_password:
+        cursor.execute("SELECT id FROM users WHERE username = ?", (default_admin_username,))
+        admin_user = cursor.fetchone()
+        if not admin_user:
+            admin_password_hash = generate_password_hash(default_admin_password)
+            cursor.execute(
+                "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+                (default_admin_username, admin_password_hash, 'admin')
+            )
     
     conn.commit()
     conn.close()
@@ -294,8 +476,8 @@ def add_item():
     date = request.form['date']
     item_type = request.form['type']
     bounty_amount_text = request.form.get('bounty_amount', '').strip()
-    image = request.files['image']
-    image_filename = None
+    image = request.files.get('image')
+    image_url = None
     bounty_amount = None
 
     if item_type == 'Lost' and bounty_amount_text:
@@ -307,15 +489,20 @@ def add_item():
             bounty_amount = None
 
     if image and image.filename != "":
-        image_filename = secure_filename(image.filename)
-        image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
+        image_url = upload_item_image_to_cloudinary(image)
+        if not image_url:
+            try:
+                image.stream.seek(0)
+            except Exception:
+                pass
+            image_url = save_item_image_locally(image)
     conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     
     cursor.execute('''
         INSERT INTO items (title, description, location, date, type, image, owner_user_id, bounty_amount)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (title, description, location, date, item_type, image_filename, session.get('user_id'), bounty_amount))
+    ''', (title, description, location, date, item_type, image_url, session.get('user_id'), bounty_amount))
     
     conn.commit()
     conn.close()
@@ -369,11 +556,12 @@ def edit_item(item_id):
                 return render_template('edit_item.html', item=item, error='Please enter a valid bounty amount.')
 
         image = request.files.get('image')
-        image_filename = item[6]
+        image_url = item[6]
 
         if image and image.filename != "":
-            image_filename = secure_filename(image.filename)
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
+            uploaded_image_url = upload_item_image_to_cloudinary(image)
+            if uploaded_image_url:
+                image_url = uploaded_image_url
 
         cursor.execute(
             '''
@@ -381,7 +569,7 @@ def edit_item(item_id):
             SET title = ?, description = ?, location = ?, date = ?, type = ?, image = ?, bounty_amount = ?
             WHERE id = ?
             ''',
-            (title, description, location, date, item_type, image_filename, bounty_amount, item_id)
+            (title, description, location, date, item_type, image_url, bounty_amount, item_id)
         )
         conn.commit()
         conn.close()
@@ -993,6 +1181,25 @@ def logout():
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
+
+
+@app.route('/support/ai', methods=['POST'])
+def support_ai_help():
+    if not is_user_logged_in():
+        return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
+
+    payload = request.get_json(silent=True) or {}
+    question_text = (payload.get('question') or '').strip()
+
+    if not question_text:
+        return jsonify({'ok': False, 'error': 'Question is required'}), 400
+
+    response_data = generate_help_ai_answer(question_text)
+    return jsonify({
+        'ok': True,
+        'answer': response_data['answer'],
+        'topic': response_data['topic']
+    })
 
 
 if __name__ == "__main__":
