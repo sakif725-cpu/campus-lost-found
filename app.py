@@ -347,11 +347,16 @@ def init_db():
     if default_admin_username and default_admin_password:
         cursor.execute("SELECT id FROM users WHERE username = ?", (default_admin_username,))
         admin_user = cursor.fetchone()
+        admin_password_hash = generate_password_hash(default_admin_password)
         if not admin_user:
-            admin_password_hash = generate_password_hash(default_admin_password)
             cursor.execute(
                 "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
                 (default_admin_username, admin_password_hash, 'admin')
+            )
+        else:
+            cursor.execute(
+                "UPDATE users SET password = ?, role = 'admin' WHERE username = ?",
+                (admin_password_hash, default_admin_username)
             )
     
     conn.commit()
